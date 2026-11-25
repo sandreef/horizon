@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import NoteList from '../components/NoteList.astro';
+import { AREAS } from '../lib/areas';
+import { getNotes, url } from '../lib/notes';
+
+const notes = await getNotes();
+const recent = notes.slice(0, 8);
+---
+<Base>
+  <section class="prose">
+    <h1>Horizon</h1>
+    <p class="muted">
+      A public notebook of what I'm learning. Each note is written in my own words, dated so the progress shows, and
+      links to the sources it came from.
+    </p>
+  </section>
+
+  <section class="areas" aria-label="Areas">
+    {
+      AREAS.map((a) => {
+        const count = notes.filter((n) => n.data.area === a.id).length;
+        return (
+          <a class="card" href={url(`${a.id}/`)}>
+            <h3>{a.name}</h3>
+            <p>{a.blurb}</p>
+            <div class="count">{count} {count === 1 ? 'note' : 'notes'}</div>
+          </a>
+        );
+      })
+    }
+  </section>
+
+  <section class="prose">
+    <h2>Recent notes</h2>
+    {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
+    {notes.length > recent.length && <p><a href={url('log/')}>All {notes.length} notes in the log →</a></p>}
+  </section>
+</Base>

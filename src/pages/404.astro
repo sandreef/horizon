@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/notes';
+---
+<Base title="Not found">
+  <section class="prose">
+    <h1>Not found</h1>
+    <p class="muted">There's no page here. Try <a href={url('')}>the home page</a> or search with ⌘K.</p>
+  </section>
+</Base>

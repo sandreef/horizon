@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import NoteList from '../../components/NoteList.astro';
+import { AREAS } from '../../lib/areas';
+import { getNotes } from '../../lib/notes';
+
+export function getStaticPaths() {
+  return AREAS.map((area) => ({ params: { area: area.id }, props: { area } }));
+}
+
+const { area } = Astro.props;
+const notes = (await getNotes()).filter((n) => n.data.area === area.id);
+---
+<Base title={area.name} description={area.blurb}>
+  <section class="prose">
+    <h1>{area.name}</h1>
+    <p class="muted">{area.blurb}</p>
+    {notes.length ? <NoteList notes={notes} showArea={false} /> : <p class="muted">No notes here yet.</p>}
+  </section>
+</Base>

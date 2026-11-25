@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+import NoteList from '../components/NoteList.astro';
+import { getNotes } from '../lib/notes';
+
+const notes = await getNotes();
+const months = new Map<string, typeof notes>();
+for (const n of notes) {
+  const key = n.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' });
+  months.set(key, [...(months.get(key) ?? []), n]);
+}
+---
+<Base title="Log" description="Every note, newest first, grouped by month.">
+  <section class="prose">
+    <h1>Log</h1>
+    <p class="muted">Every note, newest first. {notes.length} {notes.length === 1 ? 'note' : 'notes'} so far.</p>
+    {
+      [...months].map(([month, list]) => (
+        <>
+          <h2 class="month">{month} · {list.length}</h2>
+          <NoteList notes={list} />
+        </>
+      ))
+    }
+  </section>
+</Base>

@@ -1,0 +1,60 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { areaById } from '../../lib/areas';
+import { backlinks, formatDate, getNotes, isoDate, noteUrl, url } from '../../lib/notes';
+
+export async function getStaticPaths() {
+  const notes = await getNotes();
+  return notes.map((note) => ({ params: { id: note.id }, props: { note, all: notes } }));
+}
+
+const { note, all } = Astro.props;
+const { Content } = await render(note);
+const area = areaById(note.data.area)!;
+const linkedFrom = backlinks(all, note.id);
+---
+<Base title={note.data.title} description={note.data.summary}>
+  <article class="prose">
+    <h1>{note.data.title}</h1>
+    <div class="note-meta">
+      <time datetime={isoDate(note.data.date)}>{formatDate(note.data.date)}</time>
+      {note.data.updated && <span>updated {formatDate(note.data.updated)}</span>}
+      <a class="pill" href={url(`${area.id}/`)}>{area.name}</a>
+      {note.data.tags.map((t) => <span class="pill sample-badge">#{t}</span>)}
+      {note.data.sample && <span class="pill sample-badge">sample</span>}
+      {note.data.draft && <span class="pill sample-badge">draft</span>}
+    </div>
+
+    <div class="note-body">
+      <Content />
+    </div>
+
+    {
+      (note.data.sources.length > 0 || linkedFrom.length > 0) && (
+        <section class="related">
+          {note.data.sources.length > 0 && (
+            <>
+              <h2>Sources</h2>
+              <ul>
+                {note.data.sources.map((s) => (
+                  <li><a href={s.url} rel="noopener">{s.title}</a></li>
+                ))}
+              </ul>
+            </>
+          )}
+          {linkedFrom.length > 0 && (
+            <>
+              <h2>Linked from</h2>
+              <ul>
+                {linkedFrom.map((n) => (
+                  <li><a href={noteUrl(n)}>{n.data.title}</a></li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )
+    }
+  </article>
+</Base>
