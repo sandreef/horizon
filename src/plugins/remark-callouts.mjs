@@ -21,9 +21,10 @@ export function remarkCallouts() {
 
       const type = m[1].toLowerCase();
       // The title is the rest of the first line; anything after the newline is body.
-      const [titleLine, ...rest] = m[2].split('\n');
+      const newline = text.value.indexOf('\n');
+      const titleLine = m[2];
       const title = titleLine.trim() || TITLES[type] || type[0].toUpperCase() + type.slice(1);
-      const remainder = rest.join('\n');
+      const remainder = newline === -1 ? '' : text.value.slice(newline + 1);
       if (remainder) text.value = remainder;
       else first.children.shift();
       if (first.children.length === 0) node.children.shift();
