@@ -1,0 +1,64 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Ring from '../../components/Ring.astro';
+import { areaById } from '../../lib/areas';
+import { getPaths, pathUrl, progress } from '../../lib/notes';
+import { url } from '../../lib/site';
+
+const paths = await getPaths();
+---
+<Base title="Learning paths" description="Four roadmaps: modern C++, system design, agentic engineering, and math foundations.">
+  <header class="page-head">
+    <p class="eyebrow">Learning paths</p>
+    <h1>Four paths, one direction</h1>
+    <p class="lede">
+      Each path is a sequence of stages and steps. Every step says what to learn, a practice project that makes it
+      real, questions to check yourself, and the best resources. Notes you write attach to steps, so the path fills in
+      as you go.
+    </p>
+  </header>
+
+  <div class="grid grid-2">
+    {paths.map((p) => {
+      const pr = progress(p);
+      const area = areaById(p.data.area)!;
+      const started = pr.done + pr.doing > 0;
+      return (
+        <a class={`card path-card area-${p.data.area}`} href={pathUrl(p)}>
+          <div class="top">
+            <Ring pct={pr.pct} size={64} />
+            <div>
+              <span class="pill pill-area pill-dot">{area.name}</span>
+              <h3 style="margin-top:0.35rem;font-size:1.4rem">{p.data.title}</h3>
+            </div>
+          </div>
+          <p class="tagline">{p.data.tagline}</p>
+          <p class="small muted" style="margin:0">{p.data.stages.length} stages · {pr.total} steps · {pr.done} done</p>
+          <div class="stage-dots">
+            {p.data.stages.map((s) => {
+              const d = s.milestones.filter((m) => m.status === 'done').length;
+              const g = s.milestones.some((m) => m.status !== 'todo');
+              return <span class={d === s.milestones.length ? 'done' : g ? 'doing' : ''} title={s.title} />;
+            })}
+          </div>
+          <div class="current">{started ? 'Up next' : 'Start here'}: <b>{pr.current.title}</b></div>
+        </a>
+      );
+    })}
+  </div>
+
+  <section class="section prose">
+    <h2>How the paths fit together</h2>
+    <p>
+      They're designed to reinforce each other. The C++ capstone (a small storage engine) is also a system design
+      exercise. The math path's linear algebra and information theory make the transformer internals in the agentic
+      engineering path readable. And the AI-era stage of system design is where everything meets: serving models,
+      retrieval, and architecting agent systems.
+    </p>
+    <p>
+      A good rhythm is one main path and one side path at a time. Move a step to <code>doing</code> when you start it
+      and <code>done</code> when you can answer its check questions without notes. <a href={url('about/#how')}>How to update progress →</a>
+    </p>
+  </section>
+</Base>

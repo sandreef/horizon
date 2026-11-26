@@ -1,20 +1,26 @@
 ---
-import { url } from '../lib/notes';
+import Icon from './Icon.astro';
+import { url } from '../lib/site';
 const indexUrl = url('search.json');
 ---
-<dialog class="search-dialog" id="search-dialog" aria-label="Search notes" data-index={indexUrl}>
-  <input id="search-input" type="search" placeholder="Search notes…" autocomplete="off" spellcheck="false" />
+<dialog class="search-dialog" id="search-dialog" aria-label="Search" data-index={indexUrl}>
+  <div class="search-field">
+    <Icon name="search" size={18} />
+    <input id="search-input" type="search" placeholder="Search notes, paths, radar, library…" autocomplete="off" spellcheck="false" />
+  </div>
   <ul class="search-results" id="search-results" role="listbox"></ul>
+  <div class="search-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
 </dialog>
 
 <script>
-  type Doc = { title: string; url: string; area: string; date: string; summary: string; tags: string[]; text: string };
+  type Doc = { kind: string; title: string; url: string; sub: string; text: string };
 
   const dialog = document.getElementById('search-dialog') as HTMLDialogElement;
   const input = document.getElementById('search-input') as HTMLInputElement;
   const list = document.getElementById('search-results') as HTMLUListElement;
   let docs: Doc[] | null = null;
   let selected = 0;
+  const KIND_WEIGHT: Record<string, number> = { note: 3, path: 2, step: 1, radar: 1, library: 0 };
 
   async function load() {
     if (docs) return docs;
@@ -24,37 +30,36 @@ const indexUrl = url('search.json');
   }
 
   function score(d: Doc, terms: string[]) {
-    let s = 0;
+    let s = KIND_WEIGHT[d.kind] ?? 0;
     const title = d.title.toLowerCase();
-    const meta = `${d.summary} ${d.tags.join(' ')} ${d.area}`.toLowerCase();
+    const sub = d.sub.toLowerCase();
     const text = d.text.toLowerCase();
     for (const t of terms) {
-      if (title.includes(t)) s += title.startsWith(t) ? 12 : 8;
-      else if (meta.includes(t)) s += 4;
+      if (title.includes(t)) s += title.startsWith(t) ? 14 : 9;
+      else if (sub.includes(t)) s += 4;
       else if (text.includes(t)) s += 1;
       else return 0; // every term must match somewhere
     }
     return s;
   }
 
-  function escape(s: string) {
-    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-  }
+  const escape = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
   function render(results: Doc[], q: string) {
     selected = 0;
     if (!q) {
-      list.innerHTML = '';
+      list.innerHTML = '<li class="search-empty">Try “move semantics”, “cache”, “agent”, or “entropy”.</li>';
       return;
     }
     if (results.length === 0) {
-      list.innerHTML = `<li class="search-empty">No notes match “${escape(q)}”.</li>`;
+      list.innerHTML = `<li class="search-empty">Nothing matches “${escape(q)}” yet. Maybe it's your next note.</li>`;
       return;
     }
     list.innerHTML = results
       .map(
         (d, i) =>
-          `<li role="option" aria-selected="${i === 0}"><a href="${d.url}"><strong>${escape(d.title)}</strong><br><span class="muted">${escape(d.area)} · ${d.date}${d.summary ? ' · ' + escape(d.summary) : ''}</span></a></li>`,
+          `<li role="option" aria-selected="${i === 0}"><a href="${d.url}"><span class="kind">${escape(d.kind)}</span><span class="t">${escape(d.title)}</span><span class="s">${escape(d.sub)}</span></a></li>`,
       )
       .join('');
   }
@@ -68,7 +73,7 @@ const indexUrl = url('search.json');
           .map((d) => [d, score(d, terms)] as const)
           .filter(([, s]) => s > 0)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 20)
+          .slice(0, 24)
           .map(([d]) => d)
       : [];
     render(results, q);
@@ -87,15 +92,16 @@ const indexUrl = url('search.json');
     if (dialog.open) return;
     dialog.showModal();
     input.select();
-    load();
+    load().then(update);
   }
 
   document.querySelectorAll('[data-open-search]').forEach((b) => b.addEventListener('click', open));
   document.addEventListener('keydown', (e) => {
+    const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
       dialog.open ? dialog.close() : open();
-    } else if (e.key === '/' && !dialog.open && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+    } else if (e.key === '/' && !dialog.open && !typing) {
       e.preventDefault();
       open();
     }

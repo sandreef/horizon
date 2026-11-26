@@ -1,0 +1,93 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { AREAS, areaById } from '../lib/areas';
+import { editUrl } from '../lib/site';
+
+const levelOrder = { start: 0, core: 1, deep: 2 } as const;
+const items = (await getCollection('library')).sort(
+  (a, b) => AREAS.findIndex((x) => x.id === a.data.area) - AREAS.findIndex((x) => x.id === b.data.area) || levelOrder[a.data.level] - levelOrder[b.data.level],
+);
+const LEVELS = { start: 'First steps', core: 'Core', deep: 'Deep dive' } as const;
+const reading = items.filter((i) => i.data.status === 'reading');
+---
+<Base title="Library" description="Curated books, courses and references for C++, system design, AI and math.">
+  <header class="page-head">
+    <p class="eyebrow">Library</p>
+    <h1>The best things to learn from</h1>
+    <p class="lede">
+      A short, opinionated shelf: {items.length} picks across the four areas, each with a reason it's here. Most are free.
+      Mark what you're reading and what you've finished.
+    </p>
+    <p style="margin-top:1rem"><a class="btn btn-sm" href={editUrl('src/data/library.yaml')}><Icon name="edit" size={15} /> Edit the library</a></p>
+  </header>
+
+  {reading.length > 0 && (
+    <section style="margin-bottom:2.5rem">
+      <h2 style="margin-top:0">Reading now</h2>
+      <div class="grid grid-3">{reading.map((l) => <a class={`card area-${l.data.area}`} href={l.data.url} rel="noopener"><h3>{l.data.title}</h3><p>{l.data.by}</p></a>)}</div>
+    </section>
+  )}
+
+  <div class="filters" data-filters>
+    <div class="filter-group" data-group="area" role="group" aria-label="Area">
+      <span class="label">Area</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {AREAS.map((a) => <button class="chip" type="button" aria-pressed="false" data-value={a.id}>{a.short}</button>)}
+    </div>
+    <div class="filter-group" data-group="level" role="group" aria-label="Level">
+      <span class="label">Level</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {Object.entries(LEVELS).map(([k, v]) => <button class="chip" type="button" aria-pressed="false" data-value={k}>{v}</button>)}
+    </div>
+    <div class="filter-group" data-group="free" role="group" aria-label="Cost">
+      <button class="chip" type="button" aria-pressed="false" data-value="1" data-toggle>Free only</button>
+    </div>
+  </div>
+
+  <div class="grid grid-3" data-list>
+    {items.map((l) => {
+      const area = areaById(l.data.area)!;
+      return (
+        <article class={`card lib-item area-${l.data.area}`} id={l.id} data-area={l.data.area} data-level={l.data.level} data-free={l.data.free ? '1' : ''}>
+          <div class="tags">
+            <span class="pill pill-area pill-dot">{area.short}</span>
+            <span class="pill">{l.data.kind}</span>
+            <span class="pill pill-outline">{LEVELS[l.data.level]}</span>
+            {l.data.free && <span class="pill pill-outline">free</span>}
+            {l.data.status !== 'queued' && <span class={`pill status-pill-${l.data.status}`}>{l.data.status}</span>}
+          </div>
+          <h3><a href={l.data.url} rel="noopener">{l.data.title}</a></h3>
+          {l.data.by && <p class="by">{l.data.by}</p>}
+          <p class="why">{l.data.why}</p>
+        </article>
+      );
+    })}
+  </div>
+
+  <script>
+    const root = document.querySelector('[data-filters]')!;
+    const items = [...document.querySelectorAll<HTMLElement>('[data-list] > *')];
+    const state: Record<string, string> = { area: new URLSearchParams(location.search).get('area') ?? '', level: '', free: '' };
+    function apply() {
+      for (const el of items) {
+        const ok = (!state.area || el.dataset.area === state.area) && (!state.level || el.dataset.level === state.level) && (!state.free || el.dataset.free === '1');
+        el.toggleAttribute('data-hidden', !ok);
+      }
+      root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) =>
+        g.querySelectorAll<HTMLButtonElement>('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.value === state[g.dataset.group!]))),
+      );
+    }
+    root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) =>
+      g.addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+        if (!b) return;
+        const k = g.dataset.group!;
+        state[k] = b.hasAttribute('data-toggle') && state[k] === b.dataset.value ? '' : (b.dataset.value ?? '');
+        apply();
+      }),
+    );
+    apply();
+  </script>
+</Base>

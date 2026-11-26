@@ -1,0 +1,98 @@
+---
+import Base from '../../layouts/Base.astro';
+import NoteCard from '../../components/NoteCard.astro';
+import Icon from '../../components/Icon.astro';
+import { AREAS } from '../../lib/areas';
+import { MATURITY, NOTE_TYPES, getNotes } from '../../lib/notes';
+import { newFileUrl, url } from '../../lib/site';
+
+const notes = await getNotes();
+const types = Object.entries(NOTE_TYPES).filter(([t]) => notes.some((n) => n.data.type === t));
+---
+<Base title="Notes" description="All notes: concepts, guides, design studies and paper notes, filterable by area, kind and maturity.">
+  <header class="page-head">
+    <p class="eyebrow">The garden</p>
+    <h1>Notes</h1>
+    <p class="lede">
+      Notes grow over time: a <strong>seedling</strong> is a rough idea, a <strong>budding</strong> note is taking
+      shape, and an <strong>evergreen</strong> note is stable enough to rely on. Revisit, rewrite, and link them.
+    </p>
+    <p style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+      <a class="btn btn-sm" href={newFileUrl('src/content/notes')}><Icon name="plus" size={15} /> New note on GitHub</a>
+      <a class="btn btn-sm btn-ghost" href={url('graph/')}><Icon name="graph" size={15} /> Knowledge graph</a>
+      <a class="btn btn-sm btn-ghost" href={url('log/')}><Icon name="clock" size={15} /> Chronological log</a>
+    </p>
+  </header>
+
+  <div class="filters" data-filters>
+    <input class="filter-input" type="search" placeholder="Filter notes…" data-filter-text aria-label="Filter notes" />
+    <div class="filter-group" data-group="area" role="group" aria-label="Area">
+      <span class="label">Area</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {AREAS.map((a) => <button class="chip" type="button" aria-pressed="false" data-value={a.id}>{a.short}</button>)}
+    </div>
+    <div class="filter-group" data-group="type" role="group" aria-label="Kind">
+      <span class="label">Kind</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {types.map(([t, label]) => <button class="chip" type="button" aria-pressed="false" data-value={t}>{label}</button>)}
+    </div>
+    <div class="filter-group" data-group="maturity" role="group" aria-label="Maturity">
+      <span class="label">Stage</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {Object.entries(MATURITY).map(([m, v]) => <button class="chip" type="button" aria-pressed="false" data-value={m}>{v.label}</button>)}
+    </div>
+  </div>
+
+  <p class="small muted" data-count>{notes.length} notes</p>
+  <div class="note-cards grid-2 grid" data-list>
+    {notes.map((n) => <NoteCard note={n} />)}
+  </div>
+  <p class="empty-filter" data-empty data-hidden>No notes match these filters.</p>
+
+  <script>
+    const root = document.querySelector('[data-filters]')!;
+    const items = [...document.querySelectorAll<HTMLElement>('[data-list] > *')];
+    const count = document.querySelector('[data-count]')!;
+    const empty = document.querySelector('[data-empty]')!;
+    const text = root.querySelector<HTMLInputElement>('[data-filter-text]')!;
+    const state: Record<string, string> = { area: '', type: '', maturity: '' };
+
+    const params = new URLSearchParams(location.search);
+    for (const k of Object.keys(state)) state[k] = params.get(k) ?? '';
+    text.value = params.get('q') ?? '';
+
+    function apply() {
+      const q = text.value.trim().toLowerCase();
+      let shown = 0;
+      for (const el of items) {
+        const ok =
+          (!state.area || el.dataset.area === state.area) &&
+          (!state.type || el.dataset.type === state.type) &&
+          (!state.maturity || el.dataset.maturity === state.maturity) &&
+          (!q || (el.dataset.text ?? '').includes(q));
+        if (ok) { el.removeAttribute('data-hidden'); shown++; } else el.setAttribute('data-hidden', '');
+      }
+      count.textContent = `${shown} of ${items.length} notes`;
+      empty.toggleAttribute('data-hidden', shown > 0);
+      root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) => {
+        g.querySelectorAll<HTMLButtonElement>('.chip').forEach((c) =>
+          c.setAttribute('aria-pressed', String(c.dataset.value === state[g.dataset.group!])),
+        );
+      });
+      const p = new URLSearchParams();
+      for (const [k, v] of Object.entries(state)) if (v) p.set(k, v);
+      if (q) p.set('q', q);
+      history.replaceState(null, '', p.toString() ? `?${p}` : location.pathname);
+    }
+    root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) => {
+      g.addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+        if (!b) return;
+        state[g.dataset.group!] = b.dataset.value ?? '';
+        apply();
+      });
+    });
+    text.addEventListener('input', apply);
+    apply();
+  </script>
+</Base>

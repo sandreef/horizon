@@ -1,0 +1,20 @@
+# What you're focused on right now. Shown at the top of the home page.
+# Keep it to two or three items. milestone links to a path, as "path/milestone".
+- id: cpp
+  title: Get a modern C++ toolchain running
+  area: programming
+  milestone: cpp/toolchain
+  next: Set up a CMake project with warnings as errors and one GoogleTest test.
+  since: 2026-11-26
+- id: design
+  title: Build the estimation reflex
+  area: system-design
+  milestone: system-design/numbers
+  next: Memorize the latency ladder, then estimate QPS and storage for one product.
+  since: 2026-11-26
+- id: agents
+  title: Understand the agent loop from first principles
+  area: ai
+  milestone: ai-engineering/agent-loop
+  next: Read the starter note on the agent loop, then build one in under 200 lines.
+  since: 2026-11-26

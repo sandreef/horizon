@@ -1,0 +1,286 @@
+# The C++ path. Move a milestone forward by changing its status: todo → doing → done.
+title: Modern C++
+order: 1
+area: programming
+tagline: From writing C++ that works to writing C++ that is correct, fast and clear.
+why: >
+  C++ rewards deep understanding more than almost any language: ownership, value semantics,
+  undefined behavior and the memory model are things an AI assistant can type for you but
+  cannot understand for you. Knowing them is what lets you review generated code, debug the
+  hard failures, and design performance-critical systems with confidence.
+outcome: >
+  You can design and review a medium-sized modern C++ codebase: clear ownership, no leaks,
+  sanitizer-clean, well tested, and fast for reasons you can explain and measure.
+stages:
+  - title: Foundations
+    summary: A working toolchain and a solid grip on the core language.
+    milestones:
+      - id: toolchain
+        title: Compile, build and debug
+        learn:
+          - What the compiler, linker and build system each do
+          - Warning flags worth always using (-Wall -Wextra -Wpedantic, and -Werror in CI)
+          - A minimal CMake project with a library, an executable and a test target
+          - Stepping through code in a debugger (gdb or lldb), and reading assembly in Compiler Explorer
+        practice: Set up a CMake project with a small library, an app that uses it, and one test, building cleanly with warnings as errors.
+        check:
+          - What is the difference between a compile error and a link error?
+          - Why does a header-only change force recompiling every file that includes it?
+        resources:
+          - { title: "learncpp.com: introduction chapters", url: "https://www.learncpp.com/", kind: course }
+          - { title: "CMake tutorial", url: "https://cmake.org/cmake/help/latest/guide/tutorial/index.html", kind: reference }
+          - { title: "Compiler Explorer", url: "https://godbolt.org/", kind: tool }
+      - id: types-and-values
+        title: Types, references and const
+        learn:
+          - "Value semantics: copies are independent objects"
+          - References vs pointers, and when each is the right tool
+          - const correctness and why it is a design tool, not decoration
+          - Initialization forms, and why brace initialization prevents narrowing
+        practice: Write a small 2D vector type with value semantics and const-correct member functions.
+        check:
+          - When should a function take a parameter by value, by const reference, or by pointer?
+          - What does a const member function promise?
+        resources:
+          - { title: "A Tour of C++ (Stroustrup, 3rd edition)", url: "https://www.stroustrup.com/tour3.html", kind: book }
+          - { title: "C++ Core Guidelines: functions (F section)", url: "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines", kind: reference }
+      - id: classes
+        title: Classes and invariants
+        learn:
+          - Constructors establish invariants; member functions preserve them
+          - Encapsulation, and why public data is fine only without invariants
+          - Operator overloading that follows the principle of least surprise
+          - Composition over inheritance; virtual functions and when you need them
+        practice: Build a bounded queue class whose invariants can never be broken from outside.
+        check:
+          - What is a class invariant, and where should it be checked?
+          - Why should a base class with virtual functions have a virtual (or protected) destructor?
+        resources:
+          - { title: "learncpp.com: classes chapters", url: "https://www.learncpp.com/", kind: course }
+      - id: stl
+        title: The standard library you use daily
+        learn:
+          - vector as the default container, and why contiguous memory wins
+          - string and string_view (and the lifetime trap with string_view)
+          - map vs unordered_map, and their cost models
+          - Algorithms (sort, find_if, transform, accumulate) instead of hand-written loops
+        practice: Solve five small problems using only standard containers and algorithms, no raw loops where an algorithm fits.
+        check:
+          - Why can push_back invalidate iterators and references into a vector?
+          - When is unordered_map slower than map in practice?
+        resources:
+          - { title: "cppreference: containers library", url: "https://en.cppreference.com/w/cpp/container", kind: reference }
+          - { title: "hacking C++: visual cheat sheets", url: "https://hackingcpp.com/", kind: reference }
+
+  - title: Ownership and resources
+    summary: The heart of C++. Who owns what, and for how long.
+    milestones:
+      - id: ownership
+        title: RAII and the rule of zero
+        learn:
+          - Destructors run deterministically, which makes RAII possible
+          - Every resource (memory, file, lock, socket) gets exactly one owner
+          - The rule of zero, and the rule of five when you must manage a resource yourself
+        practice: Wrap a C API that returns a handle (for example FILE*) in a RAII class, then replace it with unique_ptr and a custom deleter.
+        check:
+          - Why does RAII make code exception-safe without try/catch?
+          - When do you need to write a destructor yourself?
+        resources:
+          - { title: "cppreference: RAII", url: "https://en.cppreference.com/w/cpp/language/raii", kind: reference }
+          - { title: "C++ Core Guidelines: resource management (R section)", url: "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines", kind: reference }
+      - id: move-semantics
+        title: Move semantics and value categories
+        learn:
+          - lvalues, prvalues and xvalues, and what "movable from" means
+          - Move constructors and move assignment; why they should be noexcept
+          - std::move is a cast, not a move
+          - Copy elision and returning by value
+        practice: Add move operations to a buffer class, and measure copies vs moves with a counting test.
+        check:
+          - What state is a moved-from standard library object in?
+          - Why does vector prefer to copy elements during reallocation if the move constructor is not noexcept?
+        resources:
+          - { title: "cppreference: value categories", url: "https://en.cppreference.com/w/cpp/language/value_category", kind: reference }
+      - id: smart-pointers
+        title: Smart pointers and lifetimes
+        learn:
+          - unique_ptr for single ownership (the default), shared_ptr for genuinely shared ownership
+          - weak_ptr to break cycles and observe without owning
+          - Raw pointers and references as non-owning views
+          - "Common lifetime bugs: dangling references, use-after-move, returning views into temporaries"
+        practice: Model a tree with parent links using unique_ptr children and non-owning parent pointers.
+        check:
+          - What does shared_ptr cost at runtime, compared with unique_ptr?
+          - How does a shared_ptr cycle leak, and how does weak_ptr fix it?
+        resources:
+          - { title: "cppreference: unique_ptr", url: "https://en.cppreference.com/w/cpp/memory/unique_ptr", kind: reference }
+      - id: errors
+        title: Errors and exception safety
+        learn:
+          - Exceptions, error codes, and std::expected (C++23)
+          - The basic, strong and nothrow guarantees
+          - noexcept, and where it matters
+          - Contracts and assertions for programmer errors vs. errors for expected failures
+        practice: Write a config parser two ways, with exceptions and with std::expected, and compare the call sites.
+        check:
+          - What does the strong exception guarantee promise?
+          - When is an error a bug (assert) and when is it an expected outcome (return it)?
+        resources:
+          - { title: "cppreference: std::expected", url: "https://en.cppreference.com/w/cpp/utility/expected", kind: reference }
+
+  - title: Generic and modern C++
+    summary: Templates, concepts, lambdas and compile-time code, used with taste.
+    milestones:
+      - id: templates
+        title: Templates and type deduction
+        learn:
+          - Function and class templates; how auto and template deduction work
+          - Forwarding references and std::forward
+          - Reading template error messages without panic
+        practice: Write a generic ring buffer RingBuffer<T, N> with tests for several element types.
+        check:
+          - When does T&& mean a forwarding reference rather than an rvalue reference?
+        resources:
+          - { title: "cppreference: templates", url: "https://en.cppreference.com/w/cpp/language/templates", kind: reference }
+      - id: concepts
+        title: Concepts and constraints (C++20)
+        learn:
+          - requires clauses and named concepts
+          - Standard concepts (std::integral, std::ranges::range, …)
+          - Using concepts to state intent and get readable errors
+        practice: Constrain your ring buffer and one generic algorithm with concepts; compare error messages before and after.
+        check:
+          - What problem did concepts solve that SFINAE solved badly?
+        resources:
+          - { title: "cppreference: constraints and concepts", url: "https://en.cppreference.com/w/cpp/language/constraints", kind: reference }
+      - id: lambdas-ranges
+        title: Lambdas, algorithms and ranges
+        learn:
+          - Lambda captures by value and by reference, and their lifetime risks
+          - Ranges and views for composable, lazy pipelines
+          - When a plain loop is still clearer
+        practice: Rewrite a data-processing loop as a ranges pipeline, then decide honestly which version reads better.
+        check:
+          - Why is capturing by reference in a lambda stored for later dangerous?
+        resources:
+          - { title: "cppreference: ranges library", url: "https://en.cppreference.com/w/cpp/ranges", kind: reference }
+      - id: compile-time
+        title: Compile-time programming
+        learn:
+          - constexpr functions and variables, consteval, if constexpr
+          - Moving checks to compile time with static_assert
+        practice: Compute a lookup table at compile time and prove it with static_assert.
+        check:
+          - What is the difference between constexpr and consteval?
+        resources:
+          - { title: "cppreference: constexpr", url: "https://en.cppreference.com/w/cpp/language/constexpr", kind: reference }
+
+  - title: Correctness and testing
+    summary: Code you can trust, and evidence that it is right.
+    milestones:
+      - id: undefined-behavior
+        title: Undefined behavior and sanitizers
+        learn:
+          - What undefined behavior is, and why the optimizer is allowed to assume it never happens
+          - "Common sources: out-of-bounds, signed overflow, use-after-free, data races, uninitialized reads"
+          - AddressSanitizer, UndefinedBehaviorSanitizer and ThreadSanitizer in daily builds
+        practice: Write one tiny program per UB category, catch each with a sanitizer, and read the report.
+        check:
+          - Why can a program with UB appear to work in debug builds and fail in release?
+          - Which sanitizer finds data races?
+        resources:
+          - { title: "cppreference: undefined behavior", url: "https://en.cppreference.com/w/cpp/language/ub", kind: reference }
+          - { title: "Clang AddressSanitizer docs", url: "https://clang.llvm.org/docs/AddressSanitizer.html", kind: reference }
+      - id: unit-testing
+        title: Unit testing that pays off
+        learn:
+          - "GoogleTest or Catch2 basics: fixtures, parameterized tests, matchers"
+          - Testing behavior, not implementation; one reason to fail per test
+          - "Seams for dependencies: interfaces, templates, and link-time substitution"
+          - Property-based and fuzz testing for parsers and data structures
+        practice: Bring one module to thorough coverage, then fuzz its input parser for an hour with libFuzzer.
+        check:
+          - What makes a test brittle, and how do you avoid it?
+        resources:
+          - { title: "GoogleTest user guide", url: "https://google.github.io/googletest/", kind: reference }
+          - { title: "libFuzzer", url: "https://llvm.org/docs/LibFuzzer.html", kind: reference }
+      - id: static-analysis
+        title: Static analysis and code review
+        learn:
+          - clang-tidy checks worth enabling (modernize, bugprone, performance, core guidelines)
+          - Reading the Core Guidelines as a review checklist
+          - "Reviewing AI-generated C++: what to look for first (ownership, lifetimes, UB, error paths)"
+        practice: Turn on clang-tidy for a project, fix or justify every warning, and write your own review checklist.
+        check:
+          - Name three bugs a sanitizer finds that clang-tidy cannot, and the reverse.
+        resources:
+          - { title: "clang-tidy", url: "https://clang.llvm.org/extra/clang-tidy/", kind: tool }
+          - { title: "Abseil C++ Tips of the Week", url: "https://abseil.io/tips/", kind: article }
+
+  - title: Performance and concurrency
+    summary: Fast for reasons you can explain and measure.
+    milestones:
+      - id: memory-cache
+        title: Memory, caches and data layout
+        learn:
+          - The memory hierarchy and the cost of a cache miss
+          - Struct layout, padding, and arrays of structs vs structs of arrays
+          - Allocation costs, and reserving or pooling memory
+        practice: Speed up a loop over objects by changing only the data layout; explain the result with perf counters.
+        check:
+          - Why can iterating a vector of pointers be many times slower than a vector of values?
+        resources:
+          - { title: "What every programmer should know about memory (Drepper)", url: "https://people.freebsd.org/~lstewart/articles/cpumemory.pdf", kind: paper }
+          - { title: "Agner Fog's optimization manuals", url: "https://www.agner.org/optimize/", kind: reference }
+      - id: benchmarking
+        title: Measuring performance honestly
+        learn:
+          - Microbenchmarks with Google Benchmark, and how the optimizer fools them
+          - Profiling with perf and flame graphs
+          - Measure first, then optimize the hot path
+        practice: Benchmark three implementations of the same function and profile the slowest under perf.
+        check:
+          - What does DoNotOptimize protect against in a benchmark?
+        resources:
+          - { title: "Google Benchmark", url: "https://github.com/google/benchmark", kind: tool }
+          - { title: "Brendan Gregg: perf examples", url: "https://www.brendangregg.com/perf.html", kind: article }
+      - id: concurrency
+        title: Threads, atomics and the memory model
+        learn:
+          - std::thread and std::jthread, mutexes, condition variables
+          - Data races vs race conditions
+          - Atomics and memory orders (start with seq_cst; learn acquire/release)
+          - "Designing to avoid sharing: message passing and thread pools"
+        practice: Build a thread pool with a task queue, test it under ThreadSanitizer, and benchmark it.
+        check:
+          - What is the difference between a data race and a race condition?
+          - What does acquire/release ordering guarantee?
+        resources:
+          - { title: "C++ Concurrency in Action (Williams, 2nd edition)", url: "https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition", kind: book }
+          - { title: "cppreference: memory order", url: "https://en.cppreference.com/w/cpp/atomic/memory_order", kind: reference }
+
+  - title: Mastery
+    summary: Read great code, build something real, and keep up with the language.
+    milestones:
+      - id: read-code
+        title: Read production-quality C++
+        learn:
+          - How large codebases organize headers, libraries and APIs
+          - Idioms from Abseil, LLVM or folly, and why they exist
+          - Following C++26 proposals at a high level
+        practice: Pick one Abseil or LLVM component and write a note explaining its design choices.
+        check:
+          - What design trade-off did the component you read make, and what did it give up?
+        resources:
+          - { title: "Abseil C++ guides", url: "https://abseil.io/docs/cpp/guides/", kind: reference }
+          - { title: "CppCon talks", url: "https://www.youtube.com/@CppCon", kind: video }
+      - id: capstone
+        title: "Capstone: a small storage engine"
+        learn:
+          - Combining ownership, generic code, testing, performance and concurrency in one design
+          - Writing a design doc before the code, and a retrospective after
+        practice: Build an in-memory key-value store with an LRU cache, a write-ahead log, a thread-safe API, tests, fuzzing and benchmarks. This one bridges into the system design path.
+        check:
+          - Could you explain every ownership and locking decision in your capstone to a reviewer?
+        resources:
+          - { title: "Designing Data-Intensive Applications, chapter 3 (storage)", url: "https://dataintensive.net/", kind: book }

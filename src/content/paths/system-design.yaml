@@ -1,0 +1,265 @@
+# The system design path. Move a milestone forward by changing its status: todo → doing → done.
+title: System design
+order: 2
+area: system-design
+tagline: From how one machine behaves to architecting systems that serve millions.
+why: >
+  As AI writes more of the code, the scarce skill moves up a level: choosing the right
+  architecture, seeing failure modes before they happen, and making trade-offs you can defend.
+  System design is that skill. It is also where your C++ and performance knowledge compounds.
+outcome: >
+  You can take a vague product need, ask the right questions, estimate the load, sketch an
+  architecture, defend its trade-offs, and write it up as a design doc that others can review.
+stages:
+  - title: How machines behave
+    summary: The physical facts every design rests on.
+    milestones:
+      - id: numbers
+        title: Latency numbers and estimation
+        learn:
+          - Orders of magnitude for memory, SSD, network and cross-region latency
+          - Back-of-the-envelope estimation for traffic, storage and bandwidth
+          - Turning requirements into numbers (QPS, peak vs average, read/write ratio)
+        practice: Estimate the storage and QPS for three well-known products, then compare with any public numbers you can find.
+        check:
+          - Roughly how many times slower is a cross-continent round trip than a main memory read?
+          - How many seconds are in a day, to one significant figure?
+        resources:
+          - { title: "Latency numbers every programmer should know", url: "https://gist.github.com/jboner/2841832", kind: reference }
+          - { title: "The System Design Primer", url: "https://github.com/donnemartin/system-design-primer", kind: repo }
+      - id: networking
+        title: Networking essentials
+        learn:
+          - TCP vs UDP; connection setup cost; head-of-line blocking
+          - HTTP/1.1, HTTP/2 and HTTP/3 in one paragraph each
+          - DNS, TLS, and what happens when you load a URL
+        practice: Trace a page load in your browser's network panel and explain every phase.
+        check:
+          - Why does HTTP/3 run over UDP?
+        resources:
+          - { title: "High Performance Browser Networking (free online)", url: "https://hpbn.co/", kind: book }
+      - id: storage-basics
+        title: Storage and databases from the inside
+        learn:
+          - B-trees vs LSM-trees, and their read/write trade-offs
+          - Indexes, and why a missing one turns milliseconds into seconds
+          - Transactions and isolation levels in practice
+        practice: Run EXPLAIN on queries with and without an index on a table with a million rows.
+        check:
+          - Why are LSM-trees good for write-heavy workloads?
+          - What anomaly does snapshot isolation still allow?
+        resources:
+          - { title: "Designing Data-Intensive Applications", url: "https://dataintensive.net/", kind: book }
+          - { title: "Use The Index, Luke", url: "https://use-the-index-luke.com/", kind: book }
+
+  - title: Building blocks
+    summary: The components almost every system is assembled from.
+    milestones:
+      - id: caching
+        title: Caching
+        learn:
+          - Cache-aside, read-through, write-through and write-back
+          - Eviction policies (LRU, LFU, TTL) and hit-rate math
+          - Invalidation, stampedes and hot keys
+        practice: Add a cache to a slow service, measure the hit rate, and handle a stampede on cold start.
+        check:
+          - What is a cache stampede, and two ways to prevent it?
+        resources:
+          - { title: "AWS Builders' Library: caching challenges and strategies", url: "https://aws.amazon.com/builders-library/caching-challenges-and-strategies/", kind: article }
+      - id: load-balancing
+        title: Load balancing and scaling out
+        learn:
+          - Layer 4 vs layer 7 load balancers
+          - Stateless services, health checks, and session affinity
+          - Horizontal vs vertical scaling, and autoscaling signals
+        practice: Draw how a request flows from DNS to a database through every load balancer in a typical web stack.
+        check:
+          - Why do stateless services make scaling easier?
+        resources:
+          - { title: "The System Design Primer: load balancer", url: "https://github.com/donnemartin/system-design-primer", kind: repo }
+      - id: queues
+        title: Queues, streams and async work
+        learn:
+          - Message queues vs logs (for example RabbitMQ vs Kafka)
+          - At-most-once, at-least-once, and effectively-once delivery
+          - Idempotency keys and the outbox pattern
+          - Backpressure
+        practice: Design a job system that survives worker crashes without losing or double-running jobs.
+        check:
+          - Why is exactly-once delivery so hard, and what do real systems do instead?
+        resources:
+          - { title: "Apache Kafka documentation: design", url: "https://kafka.apache.org/documentation/", kind: reference }
+      - id: apis
+        title: API design
+        learn:
+          - REST, gRPC and GraphQL, and when each fits
+          - Pagination, versioning and backward compatibility
+          - Idempotent retries and rate limiting
+        practice: Write an API spec for a small service, including errors, pagination and versioning.
+        check:
+          - Which HTTP methods are idempotent, and why does it matter for retries?
+        resources:
+          - { title: "Google API design guide", url: "https://cloud.google.com/apis/design", kind: reference }
+
+  - title: Distributed systems
+    summary: What changes when there is more than one machine.
+    milestones:
+      - id: replication-partitioning
+        title: Replication and partitioning
+        learn:
+          - Leader-follower, multi-leader and leaderless replication
+          - Replication lag and the anomalies it causes
+          - Partitioning by key range vs hash; consistent hashing; rebalancing
+        practice: Explain how you would shard a users table, and what happens to queries that span shards.
+        check:
+          - What is a hot partition, and how do you mitigate it?
+        resources:
+          - { title: "Designing Data-Intensive Applications, chapters 5 and 6", url: "https://dataintensive.net/", kind: book }
+      - id: consistency
+        title: Consistency models and CAP
+        learn:
+          - Linearizability, sequential, causal and eventual consistency
+          - CAP and PACELC without the myths
+          - Choosing consistency per operation, not per system
+        practice: For a shopping cart and a bank ledger, pick a consistency model for each operation and justify it.
+        check:
+          - What does linearizability guarantee that eventual consistency does not?
+        resources:
+          - { title: "Jepsen: consistency models", url: "https://jepsen.io/consistency", kind: reference }
+      - id: consensus
+        title: Consensus
+        learn:
+          - "Why agreement is hard: the FLP result in intuition"
+          - "Raft: leader election, log replication, safety"
+          - "Where consensus is used: etcd, ZooKeeper, metadata services"
+        practice: Work through the Raft visualization and implement leader election in a toy simulator.
+        check:
+          - Why does Raft need a majority quorum?
+        resources:
+          - { title: "Raft consensus algorithm", url: "https://raft.github.io/", kind: reference }
+          - { title: "MIT 6.5840 Distributed Systems", url: "https://pdos.csail.mit.edu/6.824/", kind: course }
+      - id: reliability
+        title: Failure and reliability
+        learn:
+          - Timeouts, retries with exponential backoff and jitter
+          - Circuit breakers, bulkheads, load shedding
+          - Cascading failures and how they start
+        practice: Write a postmortem-style analysis of a public outage report, naming each failure pattern.
+        check:
+          - Why do retries without jitter make outages worse?
+        resources:
+          - { title: "AWS Builders' Library: timeouts, retries and backoff with jitter", url: "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/", kind: article }
+          - { title: "Google SRE books (free online)", url: "https://sre.google/books/", kind: book }
+
+  - title: Architecture craft
+    summary: How senior engineers turn requirements into designs others trust.
+    milestones:
+      - id: design-method
+        title: A repeatable design method
+        learn:
+          - "Requirements first: functional, non-functional, and what is out of scope"
+          - Estimate, sketch, deep-dive, then stress-test the design
+          - Naming trade-offs explicitly
+        practice: Use the method on one drill a week and keep each attempt as a design note.
+        check:
+          - What are the first five questions you ask about any new system?
+        resources:
+          - { title: "ByteByteGo", url: "https://bytebytego.com/", kind: course }
+      - id: architecture-styles
+        title: Architecture styles
+        learn:
+          - Modular monolith, microservices, event-driven, and serverless
+          - Coupling and cohesion at the service level
+          - Conway's law, and team boundaries as architecture
+        practice: Take one system you know and argue for and against splitting it into services.
+        check:
+          - When is a modular monolith the better choice than microservices?
+        resources:
+          - { title: "Martin Fowler: software architecture guide", url: "https://martinfowler.com/architecture/", kind: article }
+          - { title: "Fundamentals of Software Architecture (Richards, Ford)", url: "https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/", kind: book }
+      - id: design-docs
+        title: Design docs and decision records
+        learn:
+          - "The structure of a good design doc: context, goals, non-goals, options, decision"
+          - Architecture decision records (ADRs) for small decisions
+          - Writing for reviewers, including AI reviewers
+        practice: Write a design doc for your C++ capstone before you build it.
+        check:
+          - Why are non-goals as important as goals?
+        resources:
+          - { title: "Documenting architecture decisions (Nygard)", url: "https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions", kind: article }
+      - id: observability
+        title: Observability and SLOs
+        learn:
+          - Metrics, logs and traces, and what each answers
+          - SLIs, SLOs and error budgets
+          - Designing for debuggability from day one
+        practice: Define SLOs for a service you know, and the dashboards and alerts that support them.
+        check:
+          - What is an error budget used for?
+        resources:
+          - { title: "OpenTelemetry documentation", url: "https://opentelemetry.io/docs/", kind: reference }
+          - { title: "Google SRE book: service level objectives", url: "https://sre.google/sre-book/service-level-objectives/", kind: book }
+
+  - title: Design drills
+    summary: Classic problems, practiced with the method until it is second nature.
+    milestones:
+      - id: drill-url-shortener
+        title: "Drill: URL shortener"
+        learn:
+          - ID generation, read-heavy caching, and redirect latency
+        practice: Do the drill in 45 minutes, then compare with the starter design note.
+        resources:
+          - { title: "The System Design Primer: Pastebin and URL shortener", url: "https://github.com/donnemartin/system-design-primer", kind: repo }
+      - id: drill-rate-limiter
+        title: "Drill: distributed rate limiter"
+        learn:
+          - Token bucket vs sliding window, and keeping counters consistent across nodes
+        practice: Design it, then write the core algorithm in C++ with tests.
+      - id: drill-chat
+        title: "Drill: chat system"
+        learn:
+          - Persistent connections, fan-out, ordering, delivery receipts, presence
+        practice: Design for one-to-one and group chat; explain message ordering guarantees.
+      - id: drill-feed
+        title: "Drill: news feed"
+        learn:
+          - Fan-out on write vs on read, ranking, and the celebrity problem
+        practice: Design the feed and estimate its storage and fan-out cost.
+      - id: drill-scheduler
+        title: "Drill: distributed job scheduler"
+        learn:
+          - Leases, exactly-once semantics in practice, and recovering from crashed workers
+        practice: Design it, reusing what you learned in queues and consensus.
+
+  - title: Systems for the AI era
+    summary: Designing systems that put models and agents in production.
+    milestones:
+      - id: llm-serving
+        title: Serving models
+        learn:
+          - Latency and throughput in LLM inference; batching; the KV cache
+          - Streaming responses, timeouts, and cost per request
+          - Routing between models by cost and capability
+        practice: Design an LLM gateway with caching, rate limits, fallbacks and cost tracking.
+        check:
+          - Why does batching raise throughput but can raise latency?
+      - id: rag-systems
+        title: Retrieval-augmented systems
+        learn:
+          - Chunking, embeddings, vector and hybrid search, re-ranking
+          - Freshness, permissions and evaluation of retrieval
+        practice: Design a documentation assistant over a large, permissioned corpus.
+        check:
+          - How would you measure whether retrieval or generation is the weak link?
+      - id: agent-systems
+        title: Architecting agent systems
+        learn:
+          - Workflows vs autonomous agents; orchestrator and worker patterns
+          - Sandboxing, permissions, and human approval points
+          - Durable execution for long-running agent tasks
+        practice: Design a system that runs coding agents on many tasks in parallel, safely.
+        check:
+          - Where must a human approve, and how does the system enforce it?
+        resources:
+          - { title: "Building effective agents (Anthropic)", url: "https://www.anthropic.com/engineering/building-effective-agents", kind: article }

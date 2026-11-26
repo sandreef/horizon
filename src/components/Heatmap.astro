@@ -1,0 +1,46 @@
+---
+// An activity map of the last 26 weeks: one square per day you wrote or updated something.
+interface Props { days: Map<string, number>; weeks?: number }
+const { days, weeks = 26 } = Astro.props;
+const cell = 13, gap = 3, left = 24, top = 16;
+const today = new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00Z');
+const end = new Date(today);
+end.setUTCDate(end.getUTCDate() + (6 - end.getUTCDay())); // end on Saturday
+const start = new Date(end);
+start.setUTCDate(start.getUTCDate() - weeks * 7 + 1);
+const cells: { x: number; y: number; k: string; n: number; future: boolean }[] = [];
+const months: { x: number; label: string }[] = [];
+let lastMonth = -1;
+for (let w = 0; w < weeks; w++) {
+  for (let d = 0; d < 7; d++) {
+    const day = new Date(start);
+    day.setUTCDate(start.getUTCDate() + w * 7 + d);
+    const k = day.toISOString().slice(0, 10);
+    if (d === 0 && day.getUTCMonth() !== lastMonth) {
+      lastMonth = day.getUTCMonth();
+      months.push({ x: left + w * (cell + gap), label: day.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) });
+    }
+    cells.push({ x: left + w * (cell + gap), y: top + d * (cell + gap), k, n: days.get(k) ?? 0, future: day > today });
+  }
+}
+const width = left + weeks * (cell + gap);
+const height = top + 7 * (cell + gap);
+const total = [...days].filter(([k]) => k >= start.toISOString().slice(0, 10)).reduce((s, [, n]) => s + n, 0);
+const activeDays = [...days.keys()].filter((k) => k >= start.toISOString().slice(0, 10)).length;
+const level = (n: number) => (n === 0 ? 0 : n === 1 ? 1 : n <= 3 ? 2 : 3);
+---
+<div class="heatmap-wrap">
+  <svg class="heatmap" width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${activeDays} active days in the last ${weeks} weeks`}>
+    {months.map((m) => <text x={m.x} y="10">{m.label}</text>)}
+    <text x="0" y={top + 1 * (cell + gap) + 10}>Mon</text>
+    <text x="0" y={top + 3 * (cell + gap) + 10}>Wed</text>
+    <text x="0" y={top + 5 * (cell + gap) + 10}>Fri</text>
+    {cells.filter((c) => !c.future).map((c) => (
+      <rect x={c.x} y={c.y} width={cell} height={cell} class={`heat-${level(c.n)}`}><title>{c.k}: {c.n} {c.n === 1 ? 'entry' : 'entries'}</title></rect>
+    ))}
+  </svg>
+  <div class="heat-legend">
+    <span>{activeDays} active {activeDays === 1 ? 'day' : 'days'} · {total} {total === 1 ? 'entry' : 'entries'} in {weeks} weeks</span>
+    <span class="keys">Less <i class="heat-0" style="background:var(--bg-2)"></i><i style="background:color-mix(in srgb, var(--accent) 35%, var(--bg-2))"></i><i style="background:color-mix(in srgb, var(--accent) 60%, var(--bg-2))"></i><i style="background:var(--accent)"></i> More</span>
+  </div>
+</div>

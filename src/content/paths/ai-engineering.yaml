@@ -1,0 +1,212 @@
+# The agentic engineering path. Move a milestone forward by changing its status: todo → doing → done.
+title: Agentic engineering
+order: 3
+area: ai
+tagline: Understand the models, build with them, and lead AI agents well.
+why: >
+  The engineers who thrive now are the ones who understand how models work, know where they
+  fail, and can direct agents to do real work: writing clear specs, building evaluations,
+  reviewing output, and designing the guardrails. This path builds that skill on purpose,
+  rather than by accident.
+outcome: >
+  You can explain how an LLM produces an answer, build a tool-using agent with evals, and run
+  coding agents on real work with clear specs, good context, and reliable review.
+stages:
+  - title: How models work
+    summary: Enough of the internals to have accurate intuitions.
+    milestones:
+      - id: transformers
+        title: Transformers and attention
+        learn:
+          - Tokens, embeddings, and next-token prediction
+          - Self-attention, and what queries, keys and values do
+          - Why context length is expensive
+        practice: Follow along with a from-scratch GPT implementation and write the attention step yourself.
+        check:
+          - Why is attention cost quadratic in sequence length?
+          - What does the model actually output at each step?
+        resources:
+          - { title: "Neural Networks: Zero to Hero (Karpathy)", url: "https://karpathy.ai/zero-to-hero.html", kind: course }
+          - { title: "The Illustrated Transformer (Alammar)", url: "https://jalammar.github.io/illustrated-transformer/", kind: article }
+          - { title: "3Blue1Brown: neural networks series", url: "https://www.3blue1brown.com/topics/neural-networks", kind: video }
+      - id: training
+        title: From pretraining to assistant
+        learn:
+          - Pretraining, supervised fine-tuning, and reinforcement learning from feedback
+          - Reasoning models and test-time compute, at a high level
+          - Why models hallucinate, and what that means for system design
+        practice: Write a one-page explanation of how a raw pretrained model becomes a helpful assistant.
+        check:
+          - What does reinforcement learning add that supervised fine-tuning does not?
+        resources:
+          - { title: "Hugging Face LLM course", url: "https://huggingface.co/learn/llm-course", kind: course }
+      - id: inference
+        title: Inference, sampling and cost
+        learn:
+          - Temperature, top-p, and determinism
+          - The KV cache, prompt caching, and why input tokens are cheaper than output
+          - Latency, throughput and cost trade-offs between model sizes
+        practice: Measure latency and cost for the same task across a small and a large model.
+        check:
+          - What does prompt caching save, and when does it apply?
+
+  - title: Using models well
+    summary: Getting reliable results through clear instructions and good context.
+    milestones:
+      - id: prompting
+        title: Clear instructions
+        learn:
+          - Say what you want, why, and what good looks like
+          - Examples, structure, and output formats
+          - Asking for reasoning when the task needs it
+        practice: Take a prompt that works half the time and make it work every time on 20 test inputs.
+        check:
+          - Why does explaining the purpose of an instruction often help more than repeating it?
+        resources:
+          - { title: "Claude prompt engineering guide", url: "https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/overview", kind: reference }
+      - id: context-engineering
+        title: Context engineering
+        learn:
+          - The context window as a scarce, curated resource
+          - "What to put in: instructions, examples, retrieved facts, tool results, memory"
+          - Compaction, notes, and sub-agents for long tasks
+        practice: Design the context for an agent that works on a large codebase for hours.
+        check:
+          - What goes wrong when you stuff everything into the context?
+        resources:
+          - { title: "Effective context engineering for AI agents (Anthropic)", url: "https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents", kind: article }
+      - id: tools-structured
+        title: Tool use and structured output
+        learn:
+          - "How function calling works: the model proposes, your code executes"
+          - "Designing tools agents can use well: names, descriptions, errors"
+          - Structured outputs and validation
+        practice: Build a small assistant with three tools and handle every error path.
+        check:
+          - Why should tool errors be returned to the model as helpful messages?
+
+  - title: Building agents
+    summary: From a single call to systems that act.
+    milestones:
+      - id: agent-loop
+        title: The agent loop
+        learn:
+          - "The loop: think, call a tool, observe, repeat, stop"
+          - Workflows (fixed steps) vs agents (model chooses steps)
+          - Stopping conditions, budgets and human checkpoints
+        practice: Build a minimal agent loop from scratch in under 200 lines, with no framework.
+        check:
+          - When is a fixed workflow better than an autonomous agent?
+        resources:
+          - { title: "Building effective agents (Anthropic)", url: "https://www.anthropic.com/engineering/building-effective-agents", kind: article }
+          - { title: "ReAct: reasoning and acting in language models", url: "https://arxiv.org/abs/2210.03629", kind: paper }
+      - id: mcp
+        title: Model Context Protocol
+        learn:
+          - "What MCP standardizes: tools, resources and prompts"
+          - Clients, servers and transports
+          - "Security: trusting servers and their tool descriptions"
+        practice: Write a small MCP server that exposes your notes as a resource and a search tool.
+        check:
+          - What problem does a shared protocol solve for tools and agents?
+        resources:
+          - { title: "Model Context Protocol", url: "https://modelcontextprotocol.io/", kind: reference }
+      - id: retrieval-memory
+        title: Retrieval and memory
+        learn:
+          - Embeddings and semantic search; hybrid with keyword search
+          - "Agent memory: what to persist, and how to keep it accurate"
+        practice: Add retrieval over your own notes to the agent you built.
+        check:
+          - When does keyword search beat embeddings?
+      - id: safety
+        title: Guardrails and prompt injection
+        learn:
+          - "Prompt injection: why text an agent reads must be treated as data"
+          - Least privilege, sandboxing and approval gates
+          - Designing for the worst plausible input
+        practice: Red-team your own agent with injected instructions in a web page or file, then fix it.
+        check:
+          - Why can't prompt injection be solved by a better prompt alone?
+        resources:
+          - { title: "OWASP Top 10 for LLM applications: prompt injection", url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/", kind: reference }
+
+  - title: Evaluating
+    summary: Knowing whether it works, and getting better on purpose.
+    milestones:
+      - id: evals
+        title: Evals
+        learn:
+          - Code-based checks, model-graded checks, and human review
+          - Building an eval set from real failures
+          - Measuring changes before shipping them
+        practice: Build an eval set of 30 cases for your agent and track its score as you change it.
+        check:
+          - Why start an eval set from observed failures rather than imagined ones?
+        resources:
+          - { title: "Your AI product needs evals (Hamel Husain)", url: "https://hamel.dev/blog/posts/evals/", kind: article }
+      - id: tracing
+        title: Tracing and error analysis
+        learn:
+          - Logging every step of an agent run
+          - Reading traces to find the real failure mode
+          - Categorizing errors to decide what to fix first
+        practice: Review 50 traces of your agent, label the failures, and fix the biggest category.
+        check:
+          - What is the difference between an eval and error analysis?
+
+  - title: Working with coding agents
+    summary: The day-to-day skill of directing agents on real engineering work.
+    milestones:
+      - id: delegation
+        title: Delegating well
+        learn:
+          - "Writing specs: goal, constraints, acceptance criteria, and what not to touch"
+          - "Giving context: the files, conventions and decisions that matter"
+          - Sizing tasks so an agent can finish and you can review
+        practice: Delegate five real tasks to a coding agent, and keep a short log of what worked and what didn't.
+        check:
+          - What makes a task a good fit to delegate, and what makes it a poor one?
+        resources:
+          - { title: "Claude Code documentation", url: "https://code.claude.com/docs/en/overview", kind: reference }
+      - id: review
+        title: Reviewing AI-written code
+        learn:
+          - Read for intent first, then correctness, then style
+          - "Common failure patterns: plausible but wrong, silent scope creep, over-engineering, weakened tests"
+          - Tests and types as the contract the agent must satisfy
+        practice: Review three agent-written changes against a checklist, and add to the checklist each time something slips through.
+        check:
+          - Why is a passing test suite not proof that an agent's change is right?
+      - id: orchestration
+        title: Orchestrating many agents
+        learn:
+          - Parallel agents on independent tasks; orchestrator and worker roles
+          - Shared memory and notes so agents don't redo work
+          - Where your attention is the bottleneck, and how to protect it
+        practice: Run two or three agents in parallel on a project for a week; write up how you coordinated them.
+        check:
+          - What should a human decide, and what can be safely delegated?
+
+  - title: Staying current
+    summary: A sustainable habit for keeping up without drowning.
+    milestones:
+      - id: radar-habit
+        title: The radar habit
+        learn:
+          - A weekly pass over a few trusted sources
+          - One radar entry per thing worth tracking, with a ring and a take
+          - Promote from assess to trial to adopt only after real use
+        practice: Add one radar entry a week for a month.
+        resources:
+          - { title: "Simon Willison's weblog", url: "https://simonwillison.net/", kind: article }
+      - id: papers
+        title: Reading papers
+        learn:
+          - "The three-pass approach: skim, read, reconstruct"
+          - Separating the claim from the evidence
+        practice: Read one paper a month and write a paper note in your own words.
+        check:
+          - What is the main claim, and what evidence would change your mind?
+        resources:
+          - { title: "How to read a paper (Keshav)", url: "https://web.stanford.edu/class/ee384m/Handouts/HowtoReadPaper.pdf", kind: paper }

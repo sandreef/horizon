@@ -1,0 +1,28 @@
+---
+// The home page sea: sky, sun on the horizon, and slow waves. Colors come from the theme.
+---
+<svg class="hero-art" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--sea-top)" />
+      <stop offset="1" stop-color="var(--sea-bottom)" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="var(--sun)" stop-opacity="0.55" />
+      <stop offset="1" stop-color="var(--sun)" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="above"><rect x="0" y="0" width="1200" height="330" /></clipPath>
+  </defs>
+  <circle cx="900" cy="330" r="190" fill="url(#glow)" />
+  <circle cx="900" cy="330" r="62" fill="var(--sun)" clip-path="url(#above)" />
+  <rect x="0" y="330" width="1200" height="190" fill="url(#sea)" />
+  <g class="glint" stroke="var(--sun)" stroke-linecap="round" opacity="0.6">
+    <path d="M860 345h80M875 358h50M885 371h30M893 384h14" stroke-width="2.5" />
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path class="wave" d="M-60 380 C 90 368, 210 392, 360 380 S 630 368, 780 380 S 1050 392, 1260 378" stroke-opacity="0.22" stroke-width="1.5" />
+    <path class="wave wave-2" d="M-60 412 C 120 398, 260 426, 420 412 S 700 398, 860 412 S 1110 426, 1260 410" stroke-opacity="0.16" stroke-width="1.5" />
+    <path class="wave wave-3" d="M-60 446 C 100 432, 250 462, 410 446 S 690 432, 850 446 S 1100 462, 1260 444" stroke-opacity="0.12" stroke-width="1.5" />
+  </g>
+  <line x1="0" y1="330.5" x2="1200" y2="330.5" stroke="#ffffff" stroke-opacity="0.35" />
+</svg>

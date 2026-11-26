@@ -1,8 +1,14 @@
 ---
 import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import AreaPill from '../../components/AreaPill.astro';
+import Maturity from '../../components/Maturity.astro';
+import Icon from '../../components/Icon.astro';
 import { areaById } from '../../lib/areas';
-import { backlinks, formatDate, getNotes, isoDate, noteUrl, url } from '../../lib/notes';
+import {
+  NOTE_TYPES, backlinks, findMilestone, formatDate, getNotes, getPaths, isoDate, noteUrl, pathUrl, readingMinutes, related,
+} from '../../lib/notes';
+import { editUrl, inlineMd, url } from '../../lib/site';
 
 export async function getStaticPaths() {
   const notes = await getNotes();
@@ -10,51 +16,135 @@ export async function getStaticPaths() {
 }
 
 const { note, all } = Astro.props;
-const { Content } = await render(note);
+const { Content, headings } = await render(note);
 const area = areaById(note.data.area)!;
+const paths = await getPaths();
+const ms = findMilestone(paths, note.data.milestone);
 const linkedFrom = backlinks(all, note.id);
+const alsoSee = related(all, note).filter((n) => !linkedFrom.includes(n));
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const minutes = readingMinutes(note.body ?? '');
+const idx = all.indexOf(note);
 ---
 <Base title={note.data.title} description={note.data.summary}>
-  <article class="prose">
-    <h1>{note.data.title}</h1>
-    <div class="note-meta">
-      <time datetime={isoDate(note.data.date)}>{formatDate(note.data.date)}</time>
-      {note.data.updated && <span>updated {formatDate(note.data.updated)}</span>}
-      <a class="pill" href={url(`${area.id}/`)}>{area.name}</a>
-      {note.data.tags.map((t) => <span class="pill sample-badge">#{t}</span>)}
-      {note.data.sample && <span class="pill sample-badge">sample</span>}
-      {note.data.draft && <span class="pill sample-badge">draft</span>}
-    </div>
+  <div class={`note-layout area-${area.id}`}>
+    <article>
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href={url('notes/')}>Notes</a><span>/</span><a href={url(`${area.id}/`)}>{area.name}</a>
+      </nav>
+      <header class="note-head">
+        <h1>{note.data.title}</h1>
+        {note.data.summary && <p class="summary">{note.data.summary}</p>}
+      </header>
+      <div class="note-meta">
+        <AreaPill area={note.data.area} />
+        <span>{NOTE_TYPES[note.data.type]}</span>
+        <Maturity value={note.data.maturity} />
+        <time datetime={isoDate(note.data.date)}>{formatDate(note.data.date)}</time>
+        {note.data.updated && <span>updated {formatDate(note.data.updated)}</span>}
+        <span>{minutes} min read</span>
+        {note.data.starter && <span class="pill pill-starter" title="A starting point to rewrite and grow in your own words">starter</span>}
+        {note.data.draft && <span class="pill pill-outline">draft</span>}
+      </div>
 
-    <div class="note-body">
-      <Content />
-    </div>
+      {ms && (
+        <a class="milestone-box" href={pathUrl(ms.path, ms.milestone.id)}>
+          <span class="focus-icon"><Icon name="path" size={18} /></span>
+          <span><small>Part of {ms.path.data.title}</small>{ms.milestone.title}</span>
+        </a>
+      )}
 
-    {
-      (note.data.sources.length > 0 || linkedFrom.length > 0) && (
-        <section class="related">
-          {note.data.sources.length > 0 && (
-            <>
-              <h2>Sources</h2>
-              <ul>
-                {note.data.sources.map((s) => (
-                  <li><a href={s.url} rel="noopener">{s.title}</a></li>
-                ))}
-              </ul>
-            </>
-          )}
-          {linkedFrom.length > 0 && (
-            <>
-              <h2>Linked from</h2>
-              <ul>
-                {linkedFrom.map((n) => (
-                  <li><a href={noteUrl(n)}>{n.data.title}</a></li>
-                ))}
-              </ul>
-            </>
-          )}
-        </section>
-      )
+      <div class="note-body">
+        <Content />
+      </div>
+
+      {note.data.cards.length > 0 && (
+        <details class="recall">
+          <summary>Recall questions · {note.data.cards.length}</summary>
+          <ol>
+            {note.data.cards.map((c) => (
+              <li><details><summary set:html={inlineMd(c.q)} /><div set:html={inlineMd(c.a)} /></details></li>
+            ))}
+          </ol>
+        </details>
+      )}
+
+      <div class="related">
+        {note.data.sources.length > 0 && (
+          <section>
+            <h2>Sources</h2>
+            <ul>{note.data.sources.map((s) => <li><a href={s.url} rel="noopener">{s.title}</a></li>)}</ul>
+          </section>
+        )}
+        {linkedFrom.length > 0 && (
+          <section>
+            <h2>Linked from</h2>
+            <ul>{linkedFrom.map((n) => <li><a href={noteUrl(n)}>{n.data.title}</a></li>)}</ul>
+          </section>
+        )}
+        {alsoSee.length > 0 && (
+          <section>
+            <h2>Related</h2>
+            <ul>{alsoSee.map((n) => <li><a href={noteUrl(n)}>{n.data.title}</a></li>)}</ul>
+          </section>
+        )}
+        {note.data.tags.length > 0 && (
+          <section>
+            <h2>Tags</h2>
+            <p style="display:flex;gap:0.35rem;flex-wrap:wrap">{note.data.tags.map((t) => <a class="pill" href={url(`notes/?q=${encodeURIComponent(t)}`)}>#{t}</a>)}</p>
+          </section>
+        )}
+      </div>
+    </article>
+
+    <aside class="note-aside" aria-label="On this page">
+      {toc.length > 1 && (
+        <div>
+          <h4>On this page</h4>
+          <ul class="toc">{toc.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+        </div>
+      )}
+      <div>
+        <h4>About this note</h4>
+        <div class="aside-facts">
+          <div><span>Stage</span><Maturity value={note.data.maturity} /></div>
+          <div><span>Written</span><span>{formatDate(note.data.date)}</span></div>
+          {note.data.updated && <div><span>Updated</span><span>{formatDate(note.data.updated)}</span></div>}
+          <div><span>Links in</span><span>{linkedFrom.length}</span></div>
+          <div><span>Recall cards</span><span>{note.data.cards.length}</span></div>
+        </div>
+      </div>
+      <div style="display:grid;gap:0.5rem">
+        <a class="aside-link" href={editUrl(`src/content/notes/${note.id}.md`)}><Icon name="edit" size={15} /> Edit on GitHub</a>
+        {note.data.cards.length > 0 && <a class="aside-link" href={url('review/')}><Icon name="cards" size={15} /> Review cards</a>}
+        <a class="aside-link" href={url('graph/')}><Icon name="graph" size={15} /> See in graph</a>
+      </div>
+      {(all[idx + 1] || all[idx - 1]) && (
+        <div>
+          <h4>Keep reading</h4>
+          <div style="display:grid;gap:0.4rem">
+            {all[idx - 1] && <a class="aside-link" href={noteUrl(all[idx - 1])}>← {all[idx - 1].data.title}</a>}
+            {all[idx + 1] && <a class="aside-link" href={noteUrl(all[idx + 1])}>{all[idx + 1].data.title} →</a>}
+          </div>
+        </div>
+      )}
+    </aside>
+  </div>
+  <script>
+    // Highlight the section you're reading in the table of contents.
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('.toc a')];
+    const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1)))).filter(Boolean) as HTMLElement[];
+    if (targets.length) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            links.forEach((a) => a.classList.toggle('active', a.hash === `#${e.target.id}`));
+          }
+        },
+        { rootMargin: '-15% 0px -70% 0px' },
+      );
+      targets.forEach((t) => io.observe(t));
     }
-  </article>
+  </script>
 </Base>

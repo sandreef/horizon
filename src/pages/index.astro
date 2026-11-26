@@ -1,39 +1,175 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import NoteList from '../components/NoteList.astro';
-import { AREAS } from '../lib/areas';
-import { getNotes, url } from '../lib/notes';
+import HorizonArt from '../components/HorizonArt.astro';
+import Icon from '../components/Icon.astro';
+import Ring from '../components/Ring.astro';
+import NoteCard from '../components/NoteCard.astro';
+import Heatmap from '../components/Heatmap.astro';
+import { AREAS, areaById } from '../lib/areas';
+import { activity, findMilestone, getNotes, getPaths, getRadar, pathUrl, progress } from '../lib/notes';
+import { formatDate, url } from '../lib/site';
 
-const notes = await getNotes();
-const recent = notes.slice(0, 8);
+const [notes, paths, radar, now] = await Promise.all([getNotes(), getPaths(), getRadar(), getCollection('now')]);
+const cardCount = notes.reduce((s, n) => s + n.data.cards.length, 0);
+const steps = paths.flatMap((p) => p.data.stages.flatMap((s) => s.milestones));
+const doneSteps = steps.filter((m) => m.status === 'done').length;
+const days = activity(notes, radar);
+const recent = notes.slice(0, 6);
 ---
 <Base>
-  <section class="prose">
-    <h1>Horizon</h1>
-    <p class="muted">
-      A public notebook of what I'm learning. Each note is written in my own words, dated so the progress shows, and
-      links to the sources it came from.
-    </p>
+  <section class="hero">
+    <HorizonArt />
+    <div class="hero-body">
+      <p class="eyebrow">A long-term learning notebook</p>
+      <h1>Steady progress toward <em>the far line.</em></h1>
+      <p class="lede">
+        Deep C++, sound system design, fluency with AI agents, and the math and science underneath. Paths to follow,
+        notes to grow, and a review deck so it all sticks.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href={url('paths/')}><Icon name="path" size={17} /> Learning paths</a>
+        <a class="btn" href={url('review/')}><Icon name="cards" size={17} /> Review today</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div><strong>{notes.length}</strong><span>notes growing</span></div>
+      <div><strong>{doneSteps}/{steps.length}</strong><span>path steps done</span></div>
+      <div><strong>{cardCount}</strong><span>recall cards</span></div>
+      <div><strong>{radar.length}</strong><span>radar entries</span></div>
+    </div>
   </section>
 
-  <section class="areas" aria-label="Areas">
-    {
-      AREAS.map((a) => {
-        const count = notes.filter((n) => n.data.area === a.id).length;
+  <div class="dash">
+    <section aria-labelledby="now-h">
+      <div class="section-head" style="margin-top:2rem">
+        <div><p class="eyebrow">Now</p><h2 id="now-h">Current focus</h2></div>
+        <a class="more" href={url('about/#how')}>How to update →</a>
+      </div>
+      <div class="focus-list">
+        {now.map((f) => {
+          const area = areaById(f.data.area)!;
+          const ms = findMilestone(paths, f.data.milestone);
+          const href = ms ? pathUrl(ms.path, ms.milestone.id) : url(`${area.id}/`);
+          return (
+            <a class={`focus area-${area.id}`} href={href}>
+              <span class="focus-icon"><Icon name={area.icon} size={20} /></span>
+              <div>
+                <h3>{f.data.title}</h3>
+                <p>{ms ? `${ms.path.data.title} · ${ms.milestone.title}` : area.name}</p>
+                <p class="next"><b>Next:</b> {f.data.next}</p>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </section>
+    <section aria-labelledby="rev-h" style="display:flex;flex-direction:column">
+      <div class="section-head" style="margin-top:2rem">
+        <div><p class="eyebrow">Daily</p><h2 id="rev-h">Review</h2></div>
+      </div>
+      <div class="review-card" style="flex:1">
+        <div>
+          <div class="big" data-due-count>·</div>
+          <h3 data-due-label>cards ready today</h3>
+          <p>A few minutes of active recall a day beats hours of rereading. Cards come from your notes, and each one comes back just before you'd forget it.</p>
+        </div>
+        <a class="btn btn-primary" href={url('review/')} style="align-self:flex-start">Start review <Icon name="arrow" size={16} /></a>
+      </div>
+    </section>
+  </div>
+
+  <section class="section" aria-labelledby="paths-h">
+    <div class="section-head">
+      <div><p class="eyebrow">Learning paths</p><h2 id="paths-h">Where you're headed</h2><p>Four roadmaps built around the goal: a strong engineer for the agentic era.</p></div>
+      <a class="more" href={url('paths/')}>All paths →</a>
+    </div>
+    <div class="grid grid-4">
+      {paths.map((p) => {
+        const pr = progress(p);
+        const started = pr.done + pr.doing > 0;
         return (
-          <a class="card" href={url(`${a.id}/`)}>
-            <h3>{a.name}</h3>
-            <p>{a.blurb}</p>
-            <div class="count">{count} {count === 1 ? 'note' : 'notes'}</div>
+          <a class={`card path-card area-${p.data.area}`} href={pathUrl(p)}>
+            <div class="top">
+              <Ring pct={pr.pct} size={52} />
+              <div><h3>{p.data.title}</h3><span class="small muted">{pr.done} of {pr.total} steps</span></div>
+            </div>
+            <p class="tagline">{p.data.tagline}</p>
+            <div class="stage-dots">
+              {p.data.stages.map((s) => {
+                const all = s.milestones.length;
+                const d = s.milestones.filter((m) => m.status === 'done').length;
+                const g = s.milestones.some((m) => m.status !== 'todo');
+                return <span class={d === all ? 'done' : g ? 'doing' : ''} title={s.title} />;
+              })}
+            </div>
+            <div class="current">{started ? 'Up next' : 'Start here'}: <b>{pr.current.title}</b></div>
           </a>
         );
-      })
-    }
+      })}
+    </div>
   </section>
 
-  <section class="prose">
-    <h2>Recent notes</h2>
-    {recent.length ? <NoteList notes={recent} /> : <p class="muted">No notes yet.</p>}
-    {notes.length > recent.length && <p><a href={url('log/')}>All {notes.length} notes in the log →</a></p>}
+  <section class="section" aria-labelledby="act-h">
+    <div class="section-head">
+      <div><p class="eyebrow">Consistency</p><h2 id="act-h">Activity</h2><p>Every note written or updated, and every radar entry, adds a square.</p></div>
+    </div>
+    <Heatmap days={days} />
   </section>
+
+  <div class="dash section" style="margin-top:4rem">
+    <section aria-labelledby="recent-h">
+      <div class="section-head">
+        <div><p class="eyebrow">Garden</p><h2 id="recent-h">Recent notes</h2></div>
+        <a class="more" href={url('notes/')}>All {notes.length} notes →</a>
+      </div>
+      <div class="note-cards">{recent.map((n) => <NoteCard note={n} />)}</div>
+    </section>
+    <section aria-labelledby="radar-h">
+      <div class="section-head">
+        <div><p class="eyebrow">AI radar</p><h2 id="radar-h">What's moving</h2></div>
+        <a class="more" href={url('radar/')}>Radar →</a>
+      </div>
+      <div class="radar-mini">
+        {radar.slice(0, 7).map((r) => (
+          <a href={url(`radar/#${r.id}`)} class={`ring-${r.data.ring}`}>
+            <span class="ring-dot" title={r.data.ring}></span>
+            <div><strong>{r.data.title}</strong><span>{r.data.ring} · {formatDate(r.data.date, { month: 'short', day: 'numeric' })}</span></div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <section class="section" aria-labelledby="areas-h">
+    <div class="section-head">
+      <div><p class="eyebrow">Areas</p><h2 id="areas-h">Browse by area</h2></div>
+    </div>
+    <div class="grid grid-4">
+      {AREAS.map((a) => {
+        const count = notes.filter((n) => n.data.area === a.id).length;
+        return (
+          <a class={`card area-${a.id}`} href={url(`${a.id}/`)}>
+            <span class="focus-icon" style="margin-bottom:0.8rem"><Icon name={a.icon} size={20} /></span>
+            <h3>{a.name}</h3>
+            <p>{a.blurb}</p>
+            <div class="card-foot">{count} {count === 1 ? 'note' : 'notes'}</div>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  <script>
+    function show(d: { due: number; fresh: number; total: number }) {
+      const n = d.due + Math.min(d.fresh, 10);
+      const el = document.querySelector('[data-due-count]');
+      const label = document.querySelector('[data-due-label]');
+      if (el) el.textContent = String(n);
+      if (label) label.textContent = n === 1 ? 'card ready today' : n === 0 ? 'cards due. All caught up.' : 'cards ready today';
+    }
+    const w = window as unknown as { __horizonDue?: { due: number; fresh: number; total: number } };
+    if (w.__horizonDue) show(w.__horizonDue);
+    document.addEventListener('horizon:due', (e) => show((e as CustomEvent).detail));
+  </script>
 </Base>

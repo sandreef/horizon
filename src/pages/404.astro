@@ -1,10 +1,11 @@
 ---
 import Base from '../layouts/Base.astro';
-import { url } from '../lib/notes';
+import { url } from '../lib/site';
 ---
 <Base title="Not found">
-  <section class="prose">
-    <h1>Not found</h1>
-    <p class="muted">There's no page here. Try <a href={url('')}>the home page</a> or search with ⌘K.</p>
+  <section class="prose" style="padding:3rem 0">
+    <p class="eyebrow">404</p>
+    <h1>Nothing on the horizon here</h1>
+    <p class="lede">This page doesn't exist. Try <a href={url('')}>the home page</a>, the <a href={url('notes/')}>notes</a>, or search with <kbd>⌘K</kbd>.</p>
   </section>
 </Base>

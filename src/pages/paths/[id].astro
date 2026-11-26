@@ -1,0 +1,116 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import Ring from '../../components/Ring.astro';
+import { areaById } from '../../lib/areas';
+import { getNotes, getPaths, noteUrl, progress } from '../../lib/notes';
+import { editUrl, url } from '../../lib/site';
+
+export async function getStaticPaths() {
+  const paths = await getPaths();
+  return paths.map((path) => ({ params: { id: path.id }, props: { path } }));
+}
+
+const { path } = Astro.props;
+const notes = await getNotes();
+const area = areaById(path.data.area)!;
+const pr = progress(path);
+const notesFor = (mid: string) => notes.filter((n) => n.data.milestone === `${path.id}/${mid}`);
+const fileUrl = editUrl(`src/content/paths/${path.id}.yaml`);
+const statusLabel = { todo: 'Not started', doing: 'In progress', done: 'Done' } as const;
+---
+<Base title={path.data.title} description={path.data.tagline}>
+  <div class={`area-${area.id}`}>
+    <nav class="crumbs" aria-label="Breadcrumb"><a href={url('paths/')}>Paths</a><span>/</span><span>{path.data.title}</span></nav>
+    <header class="path-hero">
+      <div>
+        <span class="pill pill-area pill-dot">{area.name}</span>
+        <h1 style="margin-top:0.6rem">{path.data.title}</h1>
+        <p class="lede">{path.data.tagline}</p>
+        <p class="small muted" style="margin:0.8rem 0 0">
+          {path.data.stages.length} stages · {pr.total} steps · {pr.done} done{pr.doing ? ` · ${pr.doing} in progress` : ''}
+          · <a href={fileUrl}><Icon name="edit" size={13} /> Update progress</a>
+        </p>
+      </div>
+      <Ring pct={pr.pct} size={104} />
+    </header>
+
+    <div class="path-why">
+      <div><h3>Why this matters</h3><p>{path.data.why}</p></div>
+      <div><h3>Where it leads</h3><p>{path.data.outcome}</p></div>
+    </div>
+
+    <div class="stages">
+      {path.data.stages.map((stage, i) => {
+        const done = stage.milestones.every((m) => m.status === 'done');
+        const current = i === pr.stageIndex && !done;
+        return (
+          <section class:list={['stage', { 'is-done': done, 'is-current': current }]}>
+            <div class="stage-rail"><div class="stage-num">{done ? <Icon name="check" size={20} /> : i + 1}</div></div>
+            <div>
+              <p class="eyebrow" style="margin:0.4rem 0 0">Stage {i + 1}{current ? ' · you are here' : ''}</p>
+              <h2>{stage.title}</h2>
+              <p>{stage.summary}</p>
+              <div class="milestones">
+                {stage.milestones.map((m) => {
+                  const linked = notesFor(m.id);
+                  return (
+                    <details class="milestone" id={m.id} open={m === pr.current}>
+                      <summary>
+                        <span class={`status status-${m.status}`} title={statusLabel[m.status]}>
+                          {m.status === 'done' && <Icon name="check" size={12} />}
+                        </span>
+                        <h3>{m.title}{linked.length > 0 && <span class="pill" style="margin-left:0.5rem">{linked.length} {linked.length === 1 ? 'note' : 'notes'}</span>}</h3>
+                        <Icon name="chevron" size={16} class="chev" />
+                      </summary>
+                      <div class="milestone-body">
+                        {m.learn.length > 0 && (
+                          <div><h4>Learn</h4><ul>{m.learn.map((l) => <li>{l}</li>)}</ul></div>
+                        )}
+                        {m.practice && (
+                          <div class="practice"><h4>Practice</h4><p>{m.practice}</p></div>
+                        )}
+                        {m.check.length > 0 && (
+                          <div><h4>Check yourself</h4><ul>{m.check.map((c) => <li>{c}</li>)}</ul></div>
+                        )}
+                        {m.resources.length > 0 && (
+                          <div>
+                            <h4>Resources</h4>
+                            <ul class="res-list">
+                              {m.resources.map((r) => (
+                                <li><span class="res-kind">{r.kind}</span><a href={r.url} rel="noopener">{r.title}</a></li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {linked.length > 0 && (
+                          <div>
+                            <h4>Your notes</h4>
+                            <ul class="res-list">{linked.map((n) => <li><Icon name="note" size={14} /> <a href={noteUrl(n)}>{n.data.title}</a></li>)}</ul>
+                          </div>
+                        )}
+                        <p class="small muted">
+                          {statusLabel[m.status]} · link a note here with <code>milestone: {path.id}/{m.id}</code>
+                        </p>
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  </div>
+  <script>
+    // Open the step named in the address (for links like /paths/cpp/#ownership).
+    function openTarget() {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const el = id && document.getElementById(id);
+      if (el instanceof HTMLDetailsElement) { el.open = true; el.scrollIntoView({ block: 'start' }); }
+    }
+    openTarget();
+    window.addEventListener('hashchange', openTarget);
+  </script>
+</Base>

@@ -1,0 +1,224 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { AREAS } from '../lib/areas';
+import { url } from '../lib/site';
+const cardsUrl = url('cards.json');
+---
+<Base title="Review" description="Spaced-repetition review of recall questions from every note.">
+  <div class="review-shell" data-review data-cards={cardsUrl}>
+    <header class="page-head" style="margin-bottom:1.5rem">
+      <p class="eyebrow">Daily review</p>
+      <h1>Remember what you learn</h1>
+      <p class="lede">
+        Questions from your notes, scheduled so each comes back just before you'd forget it. Answer in your head, reveal,
+        then grade yourself honestly.
+      </p>
+    </header>
+
+    <div class="review-top">
+      <div class="filter-group" data-area-filter role="group" aria-label="Area">
+        <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+        {AREAS.map((a) => <button class="chip" type="button" aria-pressed="false" data-value={a.id}>{a.short}</button>)}
+      </div>
+      <div class="review-stats">
+        <span><b data-stat="left">0</b> left</span>
+        <span><b data-stat="today">0</b> today</span>
+        <span><b data-stat="streak">0</b> day streak</span>
+      </div>
+    </div>
+
+    <div class="flashcard" data-card hidden>
+      <div class="fc-head"><span data-fc-tag></span><a data-fc-source href="#">From the note</a></div>
+      <div class="fc-q" data-fc-q></div>
+      <div class="fc-a" data-fc-a hidden></div>
+      <div class="fc-actions" data-reveal-row>
+        <button class="btn btn-primary" type="button" data-reveal style="min-width:12rem;justify-content:center">Show answer <kbd style="background:transparent;color:inherit;border-color:currentColor;opacity:.7">space</kbd></button>
+      </div>
+      <div class="fc-actions" data-grade-row hidden>
+        <button class="btn grade grade-again" type="button" data-grade="1">Again <small data-ivl="1"></small></button>
+        <button class="btn grade" type="button" data-grade="2">Hard <small data-ivl="2"></small></button>
+        <button class="btn grade" type="button" data-grade="3">Good <small data-ivl="3"></small></button>
+        <button class="btn grade grade-easy" type="button" data-grade="4">Easy <small data-ivl="4"></small></button>
+      </div>
+    </div>
+
+    <div class="flashcard review-done" data-done hidden>
+      <div class="big">🌊</div>
+      <h2 style="margin:0.5rem 0">All caught up</h2>
+      <p class="muted" data-done-text>Nothing is due right now. Come back tomorrow, or write a note with new cards.</p>
+      <p><a class="btn" href={url('notes/')}><Icon name="note" size={16} /> Browse notes</a></p>
+    </div>
+
+    <div class="review-foot">
+      <span data-summary>Loading cards…</span>
+      <span style="display:flex;gap:1rem">
+        <button type="button" data-export>Export progress</button>
+        <button type="button" data-import>Import</button>
+        <input type="file" accept="application/json" data-import-file hidden />
+      </span>
+    </div>
+    <p class="small muted" style="margin-top:1.5rem">
+      Keys: <kbd>space</kbd> show answer, <kbd>1</kbd>–<kbd>4</kbd> grade. Progress is saved in this browser; use Export and
+      Import to move it to another device. Add cards to any note with a <code>cards:</code> list in its header.
+    </p>
+  </div>
+
+  <script>
+    type Card = { id: string; q: string; a: string; note: string; title: string; url: string; area: string };
+    type S = { due: number; ivl: number; ease: number; reps: number; lapses: number };
+    type State = { cards: Record<string, S>; days: Record<string, number>; fresh: Record<string, number> };
+
+    const KEY = 'horizon.review.v1';
+    const NEW_PER_DAY = 10;
+    const DAY = 86400000;
+    const root = document.querySelector<HTMLElement>('[data-review]')!;
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
+
+    const load = (): State => {
+      try {
+        const s = JSON.parse(localStorage.getItem(KEY) || '{}');
+        return { cards: s.cards ?? {}, days: s.days ?? {}, fresh: s.fresh ?? {} };
+      } catch { return { cards: {}, days: {}, fresh: {} }; }
+    };
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+    const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+    const startOfDay = () => { const d = new Date(); d.setHours(4, 0, 0, 0); if (Date.now() < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); };
+
+    let state = load();
+    let all: Card[] = [];
+    let queue: Card[] = [];
+    let current: Card | null = null;
+    let area = '';
+
+    function schedule(s: S | undefined, g: number): S {
+      const prev: S = s ?? { due: 0, ivl: 0, ease: 2.5, reps: 0, lapses: 0 };
+      const n = { ...prev };
+      if (g === 1) {
+        n.reps = 0; n.lapses += prev.reps > 0 ? 1 : 0; n.ease = Math.max(1.3, prev.ease - 0.2); n.ivl = 0;
+        n.due = Date.now() + 10 * 60000;
+        return n;
+      }
+      if (g === 2) { n.ivl = prev.reps === 0 ? 1 : Math.max(1, Math.round(prev.ivl * 1.2)); n.ease = Math.max(1.3, prev.ease - 0.15); }
+      if (g === 3) n.ivl = prev.reps === 0 ? 1 : prev.reps === 1 ? 3 : Math.round(prev.ivl * prev.ease);
+      if (g === 4) { n.ivl = prev.reps === 0 ? 4 : Math.round(prev.ivl * prev.ease * 1.3); n.ease = prev.ease + 0.15; }
+      n.reps = prev.reps + 1;
+      n.due = startOfDay() + n.ivl * DAY;
+      return n;
+    }
+    const label = (s: S) => (s.ivl === 0 ? '10 min' : s.ivl === 1 ? '1 day' : s.ivl < 31 ? `${s.ivl} days` : s.ivl < 365 ? `${Math.round(s.ivl / 30)} mo` : `${(s.ivl / 365).toFixed(1)} yr`);
+
+    function streak() {
+      let n = 0;
+      const d = new Date();
+      if (!state.days[today()]) d.setDate(d.getDate() - 1);
+      for (;;) {
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (!state.days[k]) break;
+        n++; d.setDate(d.getDate() - 1);
+      }
+      return n;
+    }
+
+    function build() {
+      const now = Date.now();
+      const pool = all.filter((c) => !area || c.area === area);
+      const due = pool.filter((c) => state.cards[c.id] && state.cards[c.id].due <= now).sort((a, b) => state.cards[a.id].due - state.cards[b.id].due);
+      const freshLeft = Math.max(0, NEW_PER_DAY - (state.fresh[today()] ?? 0));
+      const fresh = pool.filter((c) => !state.cards[c.id]).slice(0, freshLeft);
+      queue = [...due, ...fresh];
+    }
+
+    function stats() {
+      $('[data-stat="left"]').textContent = String(queue.length);
+      $('[data-stat="today"]').textContent = String(state.days[today()] ?? 0);
+      $('[data-stat="streak"]').textContent = String(streak());
+      const learned = all.filter((c) => state.cards[c.id]?.reps).length;
+      const unseen = all.filter((c) => !state.cards[c.id]).length;
+      $('[data-summary]').textContent = `${all.length} cards from your notes · ${learned} learning · ${unseen} not seen yet`;
+    }
+
+    function next() {
+      current = queue.shift() ?? null;
+      stats();
+      const card = $('[data-card]'), done = $('[data-done]');
+      if (!current) {
+        card.hidden = true; done.hidden = false;
+        const later = all.filter((c) => (!area || c.area === area) && state.cards[c.id]).sort((a, b) => state.cards[a.id].due - state.cards[b.id].due)[0];
+        $('[data-done-text]').textContent = later
+          ? `Next card is due ${new Date(state.cards[later.id].due).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}. New cards unlock tomorrow.`
+          : 'Nothing is due right now. Come back tomorrow, or write a note with new cards.';
+        return;
+      }
+      done.hidden = true; card.hidden = false;
+      const isNew = !state.cards[current.id];
+      $('[data-fc-tag]').textContent = `${isNew ? 'New' : 'Review'} · ${current.title}`;
+      $<HTMLAnchorElement>('[data-fc-source]').href = current.url;
+      $('[data-fc-q]').innerHTML = current.q;
+      $('[data-fc-a]').innerHTML = current.a;
+      $('[data-fc-a]').hidden = true;
+      $('[data-reveal-row]').hidden = false;
+      $('[data-grade-row]').hidden = true;
+      for (const g of [1, 2, 3, 4]) $(`[data-ivl="${g}"]`).textContent = label(schedule(state.cards[current.id], g));
+      $<HTMLButtonElement>('[data-reveal]').focus({ preventScroll: true });
+    }
+
+    function reveal() {
+      if (!current) return;
+      $('[data-fc-a]').hidden = false;
+      $('[data-reveal-row]').hidden = true;
+      $('[data-grade-row]').hidden = false;
+    }
+
+    function grade(g: number) {
+      if (!current || $('[data-grade-row]').hidden) return;
+      const wasNew = !state.cards[current.id];
+      state.cards[current.id] = schedule(state.cards[current.id], g);
+      state.days[today()] = (state.days[today()] ?? 0) + 1;
+      if (wasNew) state.fresh[today()] = (state.fresh[today()] ?? 0) + 1;
+      if (g === 1) queue.push(current);
+      save();
+      next();
+    }
+
+    $('[data-reveal]').addEventListener('click', reveal);
+    root.querySelectorAll<HTMLButtonElement>('[data-grade]').forEach((b) => b.addEventListener('click', () => grade(Number(b.dataset.grade))));
+    document.addEventListener('keydown', (e) => {
+      if (e.target instanceof HTMLInputElement || (document.querySelector('dialog[open]'))) return;
+      if (e.key === ' ' && !$('[data-reveal-row]').hidden) { e.preventDefault(); reveal(); }
+      else if (/^[1-4]$/.test(e.key)) grade(Number(e.key));
+    });
+    $('[data-area-filter]').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+      if (!b) return;
+      area = b.dataset.value ?? '';
+      root.querySelectorAll<HTMLButtonElement>('[data-area-filter] .chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+      build(); next();
+    });
+    $('[data-export]').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `horizon-review-${today()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    const file = $<HTMLInputElement>('[data-import-file]');
+    $('[data-import]').addEventListener('click', () => file.click());
+    file.addEventListener('change', async () => {
+      const f = file.files?.[0];
+      if (!f) return;
+      try {
+        const s = JSON.parse(await f.text());
+        if (!s || typeof s.cards !== 'object') throw new Error('bad file');
+        state = { cards: s.cards, days: s.days ?? {}, fresh: s.fresh ?? {} };
+        save(); build(); next();
+      } catch { alert('That file is not a Horizon review export.'); }
+    });
+
+    fetch(root.dataset.cards!).then((r) => r.json()).then((cards: Card[]) => {
+      all = cards;
+      build(); next();
+    });
+  </script>
+</Base>

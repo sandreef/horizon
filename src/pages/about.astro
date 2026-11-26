@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { editUrl, newFileUrl, url } from '../lib/site';
+---
+<Base title="About" description="What Horizon is for, the principles behind it, and how to use and update it.">
+  <div class="prose">
+    <p class="eyebrow">About</p>
+    <h1>A notebook for the long game</h1>
+    <p class="lede">
+      Horizon is a public learning notebook with one aim: to become, and stay, a strong software engineer as AI changes
+      what engineering means. That means deep fundamentals (C++, systems, math), the higher-level judgment that AI makes
+      more valuable (architecture, trade-offs, review), and real fluency in working with AI agents.
+    </p>
+
+    <h2>Principles</h2>
+    <ol class="principles">
+      <li><div><strong>Understand, don't just collect</strong><span>A note is written in my own words, after the idea makes sense. Links to sources say where it came from.</span></div></li>
+      <li><div><strong>Retrieve, don't reread</strong><span>Recall questions on every note feed a spaced-repetition deck. Testing yourself is what makes knowledge stick.</span></div></li>
+      <li><div><strong>Build, then write</strong><span>Every path step has a practice project. Code that runs and a design that holds up teach more than reading about them.</span></div></li>
+      <li><div><strong>Move up a level</strong><span>Use AI to go faster, and spend the time saved on what it can't do for you: understanding, judgment, design.</span></div></li>
+      <li><div><strong>Grow notes over time</strong><span>Notes start as seedlings and are revised into evergreens. Publishing early is fine; tending is the point.</span></div></li>
+      <li><div><strong>Show the work</strong><span>Progress, dates and activity are visible. Consistency over intensity.</span></div></li>
+    </ol>
+
+    <h2 id="how">How to use it</h2>
+    <h3>A weekly rhythm</h3>
+    <ul>
+      <li><strong>Daily, 10 minutes:</strong> the <a href={url('review/')}>Review</a> deck.</li>
+      <li><strong>Most days, 30 to 60 minutes:</strong> work on the current step of a <a href={url('paths/')}>path</a>: read, then do the practice.</li>
+      <li><strong>Twice a week:</strong> write or revise a note. Add two or three recall cards to it.</li>
+      <li><strong>Weekly:</strong> one <a href={url('radar/')}>radar</a> entry, one system design drill, and a quick update of the "Now" list.</li>
+    </ul>
+
+    <h3>Add a note</h3>
+    <p>
+      Create a Markdown file in <code>src/content/notes/</code>, from your editor or <a href={newFileUrl('src/content/notes')}>right on GitHub</a>.
+      The header sets the title, date, area, kind, maturity, an optional path step, and recall cards. Push to
+      <code>main</code> and the site rebuilds in a minute or two. The README has a copy-paste template.
+    </p>
+
+    <h3>Update progress</h3>
+    <p>
+      Each path is one YAML file in <code>src/content/paths/</code>. Change a step's <code>status</code> from
+      <code>todo</code> to <code>doing</code> to <code>done</code>. Every path page has an "Update progress" link that
+      opens its file in GitHub's editor.
+    </p>
+
+    <h3>Change your focus</h3>
+    <p>The "Now" list on the home page comes from <a href={editUrl('src/data/now.yaml')}><code>src/data/now.yaml</code></a>. Keep it to two or three items.</p>
+
+    <h3>Shortcuts</h3>
+    <ul>
+      <li><kbd>⌘</kbd> <kbd>K</kbd> or <kbd>/</kbd> searches notes, path steps, the radar and the library.</li>
+      <li>On the Review page, <kbd>space</kbd> shows the answer and <kbd>1</kbd> to <kbd>4</kbd> grade it.</li>
+    </ul>
+
+    <h2>Starter content</h2>
+    <p>
+      Notes and radar entries marked <span class="pill pill-starter">starter</span> came with the site as starting
+      points. They're accurate, but they aren't yet written in my own words. Rewriting one (and removing
+      <code>starter: true</code>) is a great way to learn its topic.
+    </p>
+  </div>
+</Base>

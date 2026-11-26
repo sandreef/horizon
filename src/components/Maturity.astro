@@ -1,0 +1,7 @@
+---
+import Icon from './Icon.astro';
+import { MATURITY } from '../lib/notes';
+interface Props { value: keyof typeof MATURITY }
+const { value } = Astro.props;
+---
+<span class={`maturity maturity-${value}`} title={MATURITY[value].hint}><Icon name={value} size={14} />{MATURITY[value].label}</span>

@@ -1,8 +1,12 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import NoteList from '../../components/NoteList.astro';
+import NoteCard from '../../components/NoteCard.astro';
+import Icon from '../../components/Icon.astro';
+import Ring from '../../components/Ring.astro';
 import { AREAS } from '../../lib/areas';
-import { getNotes } from '../../lib/notes';
+import { getNotes, getPaths, getRadar, pathUrl, progress } from '../../lib/notes';
+import { url } from '../../lib/site';
 
 export function getStaticPaths() {
   return AREAS.map((area) => ({ params: { area: area.id }, props: { area } }));
@@ -10,11 +14,62 @@ export function getStaticPaths() {
 
 const { area } = Astro.props;
 const notes = (await getNotes()).filter((n) => n.data.area === area.id);
+const paths = (await getPaths()).filter((p) => p.data.area === area.id);
+const radar = area.id === 'ai' ? (await getRadar()).slice(0, 5) : [];
+const library = (await getCollection('library')).filter((l) => l.data.area === area.id);
 ---
 <Base title={area.name} description={area.blurb}>
-  <section class="prose">
-    <h1>{area.name}</h1>
-    <p class="muted">{area.blurb}</p>
-    {notes.length ? <NoteList notes={notes} showArea={false} /> : <p class="muted">No notes here yet.</p>}
-  </section>
+  <div class={`area-${area.id}`}>
+    <header class="path-hero" style="grid-template-columns:1fr">
+      <div>
+        <span class="focus-icon" style="width:3rem;height:3rem;margin-bottom:0.8rem"><Icon name={area.icon} size={24} /></span>
+        <h1>{area.name}</h1>
+        <p class="lede">{area.blurb}</p>
+        <p class="small muted" style="margin:0.6rem 0 0">{notes.length} {notes.length === 1 ? 'note' : 'notes'} · {library.length} library picks</p>
+      </div>
+    </header>
+
+    {paths.map((p) => {
+      const pr = progress(p);
+      return (
+        <a class="card path-card" href={pathUrl(p)} style="margin-bottom:2rem">
+          <div class="top">
+            <Ring pct={pr.pct} size={56} />
+            <div><p class="eyebrow" style="margin:0">Learning path</p><h3>{p.data.title}</h3></div>
+          </div>
+          <p class="tagline">{p.data.tagline}</p>
+          <div class="current">{pr.done + pr.doing > 0 ? 'Up next' : 'Start here'}: <b>{pr.current.title}</b></div>
+        </a>
+      );
+    })}
+
+    <section>
+      <div class="section-head"><h2>Notes</h2></div>
+      {notes.length ? <div class="note-cards grid grid-2">{notes.map((n) => <NoteCard note={n} />)}</div> : <p class="muted">No notes here yet.</p>}
+    </section>
+
+    {radar.length > 0 && (
+      <section class="section">
+        <div class="section-head"><h2>From the radar</h2><a class="more" href={url('radar/')}>Radar →</a></div>
+        <div class="radar-mini">
+          {radar.map((r) => (
+            <a href={url(`radar/#${r.id}`)} class={`ring-${r.data.ring}`}>
+              <span class="ring-dot"></span><div><strong>{r.data.title}</strong><span>{r.data.summary}</span></div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {library.length > 0 && (
+      <section class="section">
+        <div class="section-head"><h2>From the library</h2><a class="more" href={url(`library/?area=${area.id}`)}>All picks →</a></div>
+        <div class="radar-mini">
+          {library.slice(0, 6).map((l) => (
+            <a href={l.data.url} rel="noopener"><span class="pill">{l.data.kind}</span><div><strong>{l.data.title}</strong><span>{l.data.why}</span></div></a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
 </Base>

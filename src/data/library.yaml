@@ -1,0 +1,297 @@
+# Your library: books, courses and references worth your time.
+# Each entry needs a unique id. Change status as you go: queued → reading → done.
+# kind: book, course, reference, article, video, repo, paper, newsletter, tool
+# level: start (first steps), core (the main work), deep (once the basics are solid)
+
+# ---- Programming / C++ ----
+- id: tour-of-cpp
+  title: A Tour of C++ (3rd edition)
+  by: Bjarne Stroustrup
+  url: https://www.stroustrup.com/tour3.html
+  kind: book
+  area: programming
+  level: start
+  why: The fastest honest overview of modern C++, from its creator. Read it once early, then again later.
+- id: learncpp
+  title: learncpp.com
+  url: https://www.learncpp.com/
+  kind: course
+  area: programming
+  level: start
+  free: true
+  why: The most thorough free C++ course; use it to fill gaps systematically.
+- id: cppreference
+  title: cppreference.com
+  url: https://en.cppreference.com/w/
+  kind: reference
+  area: programming
+  level: core
+  free: true
+  why: The reference you will check daily. Learn to read its pages; it pays off for years.
+- id: core-guidelines
+  title: C++ Core Guidelines
+  by: Stroustrup, Sutter and others
+  url: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines
+  kind: reference
+  area: programming
+  level: core
+  free: true
+  why: A checklist of good modern C++ with reasons. Excellent for reviewing code, including AI-written code.
+- id: abseil-totw
+  title: Abseil C++ Tips of the Week
+  url: https://abseil.io/tips/
+  kind: article
+  area: programming
+  level: core
+  free: true
+  why: Short, practical essays from a huge production codebase. One tip a week is a great habit.
+- id: concurrency-in-action
+  title: C++ Concurrency in Action (2nd edition)
+  by: Anthony Williams
+  url: https://www.manning.com/books/c-plus-plus-concurrency-in-action-second-edition
+  kind: book
+  area: programming
+  level: deep
+  why: The standard book on threads, atomics and the memory model in C++.
+- id: hacking-cpp
+  title: hacking C++
+  url: https://hackingcpp.com/
+  kind: reference
+  area: programming
+  level: start
+  free: true
+  why: Visual cheat sheets for containers, algorithms and idioms. Great for quick review.
+- id: compiler-explorer
+  title: Compiler Explorer
+  url: https://godbolt.org/
+  kind: tool
+  area: programming
+  level: core
+  free: true
+  why: See what your code compiles to. The best tool for building performance intuition.
+- id: drepper-memory
+  title: What Every Programmer Should Know About Memory
+  by: Ulrich Drepper
+  url: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+  kind: paper
+  area: programming
+  level: deep
+  free: true
+  why: Long, but the definitive explanation of caches and memory performance.
+- id: cppcon
+  title: CppCon talks
+  url: https://www.youtube.com/@CppCon
+  kind: video
+  area: programming
+  level: core
+  free: true
+  why: Conference talks from the people building the language and its biggest codebases. Back to Basics tracks are gold.
+
+# ---- System design ----
+- id: ddia
+  title: Designing Data-Intensive Applications
+  by: Martin Kleppmann
+  url: https://dataintensive.net/
+  kind: book
+  area: system-design
+  level: core
+  why: The single most important book for system design. Slow, careful reading pays off.
+- id: system-design-primer
+  title: The System Design Primer
+  url: https://github.com/donnemartin/system-design-primer
+  kind: repo
+  area: system-design
+  level: start
+  free: true
+  why: A broad, free map of the building blocks with worked examples.
+- id: bytebytego
+  title: ByteByteGo
+  by: Alex Xu
+  url: https://bytebytego.com/
+  kind: course
+  area: system-design
+  level: start
+  why: Clear diagrams and case studies of classic designs. Good for drills.
+- id: sre-books
+  title: Google SRE books
+  url: https://sre.google/books/
+  kind: book
+  area: system-design
+  level: core
+  free: true
+  why: "How reliability is engineered at scale: SLOs, incident response, cascading failures."
+- id: aws-builders-library
+  title: Amazon Builders' Library
+  url: https://aws.amazon.com/builders-library/
+  kind: article
+  area: system-design
+  level: core
+  free: true
+  why: Hard-won lessons on retries, caching, load shedding and deployments from running huge systems.
+- id: hpbn
+  title: High Performance Browser Networking
+  by: Ilya Grigorik
+  url: https://hpbn.co/
+  kind: book
+  area: system-design
+  level: start
+  free: true
+  why: The networking fundamentals (TCP, TLS, HTTP/2) explained for engineers.
+- id: mit-6824
+  title: MIT 6.5840 Distributed Systems
+  url: https://pdos.csail.mit.edu/6.824/
+  kind: course
+  area: system-design
+  level: deep
+  free: true
+  why: Lectures, papers and labs (including Raft) from a classic course.
+- id: fundamentals-architecture
+  title: Fundamentals of Software Architecture
+  by: Mark Richards and Neal Ford
+  url: https://www.oreilly.com/library/view/fundamentals-of-software/9781492043447/
+  kind: book
+  area: system-design
+  level: core
+  why: Architecture styles and the trade-off thinking behind them.
+- id: jepsen
+  title: Jepsen consistency models
+  url: https://jepsen.io/consistency
+  kind: reference
+  area: system-design
+  level: deep
+  free: true
+  why: A precise, clickable map of consistency models.
+
+# ---- AI ----
+- id: zero-to-hero
+  title: "Neural Networks: Zero to Hero"
+  by: Andrej Karpathy
+  url: https://karpathy.ai/zero-to-hero.html
+  kind: course
+  area: ai
+  level: core
+  free: true
+  why: Build neural networks and a GPT from scratch in code. The best way to really understand LLMs.
+- id: illustrated-transformer
+  title: The Illustrated Transformer
+  by: Jay Alammar
+  url: https://jalammar.github.io/illustrated-transformer/
+  kind: article
+  area: ai
+  level: start
+  free: true
+  why: The clearest visual walkthrough of the transformer architecture.
+- id: building-effective-agents
+  title: Building effective agents
+  by: Anthropic
+  url: https://www.anthropic.com/engineering/building-effective-agents
+  kind: article
+  area: ai
+  level: start
+  free: true
+  why: A practical taxonomy of workflows and agents, and when to use which.
+- id: context-engineering
+  title: Effective context engineering for AI agents
+  by: Anthropic
+  url: https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents
+  kind: article
+  area: ai
+  level: core
+  free: true
+  why: How to curate what goes into an agent's context over long tasks.
+- id: mcp-docs
+  title: Model Context Protocol
+  url: https://modelcontextprotocol.io/
+  kind: reference
+  area: ai
+  level: core
+  free: true
+  why: The open standard for connecting models to tools and data.
+- id: hamel-evals
+  title: Your AI product needs evals
+  by: Hamel Husain
+  url: https://hamel.dev/blog/posts/evals/
+  kind: article
+  area: ai
+  level: core
+  free: true
+  why: A practical guide to building evaluations from real failures.
+- id: hf-llm-course
+  title: Hugging Face LLM course
+  url: https://huggingface.co/learn/llm-course
+  kind: course
+  area: ai
+  level: start
+  free: true
+  why: Hands-on course on transformers, fine-tuning and the open model ecosystem.
+- id: simon-willison
+  title: Simon Willison's weblog
+  url: https://simonwillison.net/
+  kind: newsletter
+  area: ai
+  level: start
+  free: true
+  why: Careful, hands-on notes on new models and tools, almost daily. A reliable radar source.
+- id: lilian-weng-agents
+  title: LLM powered autonomous agents
+  by: Lilian Weng
+  url: https://lilianweng.github.io/posts/2023-06-23-agent/
+  kind: article
+  area: ai
+  level: core
+  free: true
+  why: A foundational survey of planning, memory and tool use in agents.
+
+# ---- Math & science ----
+- id: 3b1b-linear-algebra
+  title: Essence of linear algebra
+  by: 3Blue1Brown
+  url: https://www.3blue1brown.com/topics/linear-algebra
+  kind: video
+  area: science-tech
+  level: start
+  free: true
+  why: Builds geometric intuition for vectors and matrices that textbooks often skip.
+- id: mml-book
+  title: Mathematics for Machine Learning
+  by: Deisenroth, Faisal and Ong
+  url: https://mml-book.github.io/
+  kind: book
+  area: science-tech
+  level: core
+  free: true
+  why: "The math behind ML in one free book: linear algebra, calculus, probability, optimization."
+- id: mit-1806
+  title: MIT 18.06 Linear Algebra
+  by: Gilbert Strang
+  url: https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/
+  kind: course
+  area: science-tech
+  level: core
+  free: true
+  why: The classic linear algebra course, with lectures and problem sets.
+- id: seeing-theory
+  title: Seeing Theory
+  url: https://seeing-theory.brown.edu/
+  kind: course
+  area: science-tech
+  level: start
+  free: true
+  why: Interactive visual introduction to probability and statistics.
+- id: erickson-algorithms
+  title: Algorithms
+  by: Jeff Erickson
+  url: https://jeffe.cs.illinois.edu/teaching/algorithms/
+  kind: book
+  area: science-tech
+  level: core
+  free: true
+  why: A rigorous and readable free algorithms textbook.
+- id: quanta
+  title: Quanta Magazine
+  url: https://www.quantamagazine.org/
+  kind: newsletter
+  area: science-tech
+  level: start
+  free: true
+  why: Excellent writing on developments in math, physics, biology and computer science.

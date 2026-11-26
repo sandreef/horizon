@@ -2,22 +2,27 @@
 import 'katex/dist/katex.min.css';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Icon from '../components/Icon.astro';
 import Search from '../components/Search.astro';
 import { AREAS } from '../lib/areas';
-import { url } from '../lib/notes';
+import { SITE, url } from '../lib/site';
 
 interface Props {
   title?: string;
   description?: string;
 }
 
-const { title, description = 'A public notebook of what I am learning: AI, programming, system design, and science.' } = Astro.props;
-const pageTitle = title ? `${title} · Horizon` : 'Horizon';
+const { title, description = SITE.description } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.name}` : `${SITE.name}: ${SITE.tagline}`;
 const path = Astro.url.pathname;
 const nav = [
-  ...AREAS.map((a) => ({ href: url(`${a.id}/`), label: a.name })),
-  { href: url('log/'), label: 'Log' },
+  { href: url('paths/'), label: 'Paths', icon: 'path' },
+  { href: url('notes/'), label: 'Notes', icon: 'note' },
+  { href: url('radar/'), label: 'Radar', icon: 'radar' },
+  { href: url('library/'), label: 'Library', icon: 'book' },
+  { href: url('review/'), label: 'Review', icon: 'cards', badge: true },
 ];
+const cardsUrl = url('cards.json');
 ---
 <!doctype html>
 <html lang="en">
@@ -28,31 +33,112 @@ const nav = [
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link rel="alternate" type="application/rss+xml" title="Horizon" href={url('rss.xml')} />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#f4f7f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#08131a" media="(prefers-color-scheme: dark)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap" />
+    <script is:inline>
+      // Set the theme before the page paints, so there's no flash.
+      (function () {
+        var t = null;
+        try { t = localStorage.getItem('horizon.theme'); } catch (e) {}
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
   </head>
   <body>
+    <a class="skip" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="wrap">
         <a class="brand" href={url('')}><Logo /> Horizon</a>
         <nav class="nav" aria-label="Main">
-          {nav.map((n) => <a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a>)}
+          {nav.map((n) => (
+            <a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>
+              {n.label}
+              {n.badge && <span class="due-badge" data-due-badge hidden></span>}
+            </a>
+          ))}
         </nav>
-        <button class="search-btn" type="button" data-open-search aria-label="Search notes">
-          Search <kbd>⌘K</kbd>
-        </button>
+        <div class="header-tools">
+          <button class="search-btn" type="button" data-open-search aria-label="Search">
+            <Icon name="search" size={16} /><span class="label">Search</span> <kbd>⌘K</kbd>
+          </button>
+          <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-label="Switch light or dark theme">
+            <Icon name="sun" size={17} class="sun" /><Icon name="moon" size={17} class="moon" />
+          </button>
+        </div>
       </div>
     </header>
-    <main>
+    <main id="main">
       <div class="wrap">
         <slot />
       </div>
     </main>
     <footer class="site-footer">
-      <div class="wrap">
-        Horizon is a personal learning notebook. Notes are in my own words; sources are linked from each note.
+      <div class="wrap footer-grid">
+        <div>
+          <div class="footer-brand"><Logo /> Horizon</div>
+          <p>{SITE.tagline} Notes are written in my own words, and every note links to its sources.</p>
+          <p class="small"><a href={url('rss.xml')}>RSS feed</a> · <a href={SITE.repo}>Source on GitHub</a></p>
+        </div>
+        <div>
+          <h4>Learn</h4>
+          <ul>
+            <li><a href={url('paths/')}>Learning paths</a></li>
+            <li><a href={url('review/')}>Review deck</a></li>
+            <li><a href={url('library/')}>Library</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Areas</h4>
+          <ul>{AREAS.map((a) => <li><a href={url(`${a.id}/`)}>{a.name}</a></li>)}</ul>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href={url('notes/')}>All notes</a></li>
+            <li><a href={url('graph/')}>Knowledge graph</a></li>
+            <li><a href={url('log/')}>Log</a></li>
+            <li><a href={url('about/')}>About</a></li>
+          </ul>
+        </div>
       </div>
     </footer>
     <Search />
+    <script is:inline define:vars={{ cardsUrl }}>
+      // Theme toggle.
+      document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          try { localStorage.setItem('horizon.theme', next); } catch (e) {}
+        });
+      });
+      // Count review cards due today (state lives in this browser).
+      (function () {
+        var badges = document.querySelectorAll('[data-due-badge]');
+        if (!badges.length) return;
+        var state = {};
+        try { state = JSON.parse(localStorage.getItem('horizon.review.v1') || '{}').cards || {}; } catch (e) {}
+        fetch(cardsUrl).then(function (r) { return r.json(); }).then(function (cards) {
+          var now = Date.now(), due = 0, fresh = 0;
+          cards.forEach(function (c) {
+            var s = state[c.id];
+            if (!s) fresh++;
+            else if (s.due <= now) due++;
+          });
+          var n = due + Math.min(fresh, 10);
+          window.__horizonDue = { due: due, fresh: fresh, total: cards.length };
+          document.dispatchEvent(new CustomEvent('horizon:due', { detail: window.__horizonDue }));
+          badges.forEach(function (b) { if (n > 0) { b.textContent = n > 99 ? '99+' : n; b.hidden = false; } });
+        }).catch(function () {});
+      })();
+    </script>
   </body>
 </html>

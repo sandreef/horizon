@@ -1,0 +1,24 @@
+---
+import Maturity from './Maturity.astro';
+import { areaById } from '../lib/areas';
+import { NOTE_TYPES, formatDate, isoDate, noteUrl, readingMinutes, type Note } from '../lib/notes';
+interface Props { note: Note }
+const { note: n } = Astro.props;
+const area = areaById(n.data.area)!;
+---
+<a class={`note-card area-${n.data.area}`} href={noteUrl(n)}
+  data-area={n.data.area} data-type={n.data.type} data-maturity={n.data.maturity}
+  data-text={`${n.data.title} ${n.data.summary ?? ''} ${n.data.tags.join(' ')}`.toLowerCase()}>
+  <h3>{n.data.title}</h3>
+  <time datetime={isoDate(n.data.updated ?? n.data.date)}>{formatDate(n.data.updated ?? n.data.date)}</time>
+  {n.data.summary && <p>{n.data.summary}</p>}
+  <div class="meta">
+    <span class="pill pill-area pill-dot">{area.short}</span>
+    <span>{NOTE_TYPES[n.data.type]}</span>
+    <Maturity value={n.data.maturity} />
+    <span>{readingMinutes(n.body ?? '')} min</span>
+    {n.data.cards.length > 0 && <span>{n.data.cards.length} cards</span>}
+    {n.data.starter && <span class="pill pill-starter">starter</span>}
+    {n.data.draft && <span class="pill pill-outline">draft</span>}
+  </div>
+</a>

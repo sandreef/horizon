@@ -3,11 +3,11 @@
 //   > [!note] Optional title
 //   > Body text
 //
-// Types: note, tip, question, warning, summary (anything else is styled like note).
+// Types: note, tip, question, warning, summary, example (anything else is styled like note).
 import { visit } from 'unist-util-visit';
 
 const MARKER = /^\[!(\w+)\][ \t]*(.*)/;
-const TITLES = { note: 'Note', tip: 'Tip', question: 'Question', warning: 'Warning', summary: 'Summary' };
+const TITLES = { note: 'Note', tip: 'Tip', question: 'Question', warning: 'Warning', summary: 'Summary', example: 'Example' };
 
 export function remarkCallouts() {
   return (tree) => {

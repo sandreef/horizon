@@ -1,0 +1,95 @@
+---
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getRadar } from '../lib/notes';
+import { formatDate, isoDate, newFileUrl } from '../lib/site';
+
+const radar = await getRadar();
+const entries = await Promise.all(radar.map(async (r) => ({ r, Content: (await render(r)).Content })));
+const RINGS = {
+  adopt: 'Use it now. Proven on real work.',
+  trial: 'Try it on a real task soon.',
+  assess: 'Worth understanding. Read up.',
+  hold: 'Not for now, or overhyped.',
+} as const;
+const KINDS = { model: 'Model', tool: 'Tool', practice: 'Practice', paper: 'Paper', idea: 'Idea' } as const;
+---
+<Base title="AI radar" description="A personal radar of AI models, tools, practices and papers: what to adopt, try, assess or hold.">
+  <header class="page-head">
+    <p class="eyebrow">AI radar</p>
+    <h1>What's moving in AI</h1>
+    <p class="lede">
+      A running log of models, tools, practices and papers, each placed on a ring with a short take on why it matters.
+      Things move inward only after real use.
+    </p>
+    <p style="margin-top:1rem"><a class="btn btn-sm" href={newFileUrl('src/content/radar')}><Icon name="plus" size={15} /> New radar entry on GitHub</a></p>
+  </header>
+
+  <div class="radar-legend">
+    {Object.entries(RINGS).map(([ring, hint]) => (
+      <div class={`ring-${ring}`}>
+        <strong><span class="ring-dot"></span>{ring[0].toUpperCase() + ring.slice(1)} <span class="muted" style="font-weight:500">· {radar.filter((r) => r.data.ring === ring).length}</span></strong>
+        <span>{hint}</span>
+      </div>
+    ))}
+  </div>
+
+  <div class="filters" data-filters>
+    <div class="filter-group" data-group="ring" role="group" aria-label="Ring">
+      <span class="label">Ring</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {Object.keys(RINGS).map((r) => <button class="chip" type="button" aria-pressed="false" data-value={r}>{r}</button>)}
+    </div>
+    <div class="filter-group" data-group="kind" role="group" aria-label="Kind">
+      <span class="label">Kind</span>
+      <button class="chip" type="button" aria-pressed="true" data-value="">All</button>
+      {Object.entries(KINDS).filter(([k]) => radar.some((r) => r.data.kind === k)).map(([k, l]) => <button class="chip" type="button" aria-pressed="false" data-value={k}>{l}</button>)}
+    </div>
+  </div>
+
+  <div class="radar-list" data-list>
+    {entries.map(({ r, Content }) => (
+      <article class={`radar-item ring-${r.data.ring}`} id={r.id} data-ring={r.data.ring} data-kind={r.data.kind}>
+        <time datetime={isoDate(r.data.date)}>{formatDate(r.data.date)}</time>
+        <div>
+          <div class="meta">
+            <span class="pill ring-pill">{r.data.ring}</span>
+            <span class="pill">{KINDS[r.data.kind]}</span>
+            {r.data.tags.map((t) => <span class="pill pill-outline">#{t}</span>)}
+            {r.data.starter && <span class="pill pill-starter">starter</span>}
+          </div>
+          <h3>{r.data.link ? <a href={r.data.link} rel="noopener">{r.data.title} <Icon name="external" size={14} /></a> : r.data.title}</h3>
+          <p class="sum">{r.data.summary}</p>
+          <div class="take"><Content /></div>
+        </div>
+      </article>
+    ))}
+  </div>
+  <p class="empty-filter" data-empty data-hidden>Nothing on the radar matches.</p>
+
+  <script>
+    const root = document.querySelector('[data-filters]')!;
+    const items = [...document.querySelectorAll<HTMLElement>('[data-list] > *')];
+    const empty = document.querySelector('[data-empty]')!;
+    const state: Record<string, string> = { ring: '', kind: '' };
+    function apply() {
+      let shown = 0;
+      for (const el of items) {
+        const ok = (!state.ring || el.dataset.ring === state.ring) && (!state.kind || el.dataset.kind === state.kind);
+        el.toggleAttribute('data-hidden', !ok);
+        if (ok) shown++;
+      }
+      empty.toggleAttribute('data-hidden', shown > 0);
+      root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) =>
+        g.querySelectorAll<HTMLButtonElement>('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.value === state[g.dataset.group!]))),
+      );
+    }
+    root.querySelectorAll<HTMLElement>('[data-group]').forEach((g) =>
+      g.addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>('.chip');
+        if (b) { state[g.dataset.group!] = b.dataset.value ?? ''; apply(); }
+      }),
+    );
+  </script>
+</Base>

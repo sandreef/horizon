@@ -1,0 +1,10 @@
+---
+import { areaById } from '../lib/areas';
+import { url } from '../lib/site';
+interface Props { area: string; link?: boolean }
+const { area, link = true } = Astro.props;
+const a = areaById(area);
+---
+{a && (link
+  ? <a class={`pill pill-area pill-dot area-${a.id}`} href={url(`${a.id}/`)}>{a.name}</a>
+  : <span class={`pill pill-area pill-dot area-${a.id}`}>{a.name}</span>)}

@@ -1,1 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><defs><clipPath id="c"><rect width="32" height="32" rx="7"/></clipPath></defs><g clip-path="url(#c)"><rect width="32" height="32" fill="#cfe7ef"/><circle cx="16" cy="19" r="7" fill="#f2b84b"/><rect y="19" width="32" height="13" fill="#1f6f8b"/><path d="M6 23h20M10 27h12" stroke="#cfe7ef" stroke-width="2" stroke-linecap="round"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#0b4f60"/>
+  <circle cx="16" cy="19" r="7" fill="#f2b56b"/>
+  <rect x="0" y="19" width="32" height="13" fill="#0e6d84"/>
+  <path d="M4 19h24" stroke="#fff" stroke-opacity=".6" stroke-width="1.2"/>
+  <path d="M7 24c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" stroke="#fff" stroke-opacity=".5" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+</svg>

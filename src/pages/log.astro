@@ -12,15 +12,14 @@ for (const n of notes) {
 ---
 <Base title="Log" description="Every note, newest first, grouped by month.">
   <section class="prose">
-    <h1>Log</h1>
-    <p class="muted">Every note, newest first. {notes.length} {notes.length === 1 ? 'note' : 'notes'} so far.</p>
-    {
-      [...months].map(([month, list]) => (
-        <>
-          <h2 class="month">{month} · {list.length}</h2>
-          <NoteList notes={list} />
-        </>
-      ))
-    }
+    <p class="eyebrow">Log</p>
+    <h1>Every note, in order</h1>
+    <p class="lede">{notes.length} {notes.length === 1 ? 'note' : 'notes'} so far, newest first.</p>
+    {[...months].map(([month, list]) => (
+      <>
+        <h2 class="month">{month} · {list.length}</h2>
+        <NoteList notes={list} />
+      </>
+    ))}
   </section>
 </Base>

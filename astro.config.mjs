@@ -13,7 +13,14 @@ export default defineConfig({
   site: 'https://sandreef.github.io',
   base,
   trailingSlash: 'always',
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   markdown: {
+    // Code blocks follow the site's light or dark theme.
+    shikiConfig: {
+      themes: { light: 'github-light', dark: 'github-dark' },
+      defaultColor: false,
+      wrap: false,
+    },
     processor: unified({
       remarkPlugins: [remarkMath, [remarkWikiLinks, { base }], remarkCallouts],
       rehypePlugins: [rehypeKatex],

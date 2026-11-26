@@ -1,0 +1,12 @@
+---
+// A progress ring. pct is 0 to 100.
+interface Props { pct: number; size?: number; label?: string }
+const { pct, size = 56, label } = Astro.props;
+const r = (size - 6) / 2;
+const c = 2 * Math.PI * r;
+---
+<svg class="ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label ?? `${pct}% done`}>
+  <circle class="track" cx={size / 2} cy={size / 2} r={r} />
+  <circle class="fill" cx={size / 2} cy={size / 2} r={r} stroke-dasharray={c} stroke-dashoffset={c * (1 - pct / 100)} />
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central">{pct}%</text>
+</svg>
