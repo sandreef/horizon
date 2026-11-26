@@ -18,8 +18,16 @@ export async function getNotes(): Promise<Note[]> {
   return notes.sort(byDate);
 }
 
+const RING_ORDER = ['adopt', 'trial', 'assess', 'hold'];
+
+/** Radar entries, newest first; on the same day, inner rings first. */
 export async function getRadar(): Promise<RadarEntry[]> {
-  return (await getCollection('radar')).sort(byDate);
+  return (await getCollection('radar')).sort(
+    (a, b) =>
+      b.data.date.getTime() - a.data.date.getTime() ||
+      RING_ORDER.indexOf(a.data.ring) - RING_ORDER.indexOf(b.data.ring) ||
+      a.data.title.localeCompare(b.data.title),
+  );
 }
 
 export async function getPaths(): Promise<Path[]> {

@@ -28,8 +28,7 @@ const statusLabel = { todo: 'Not started', doing: 'In progress', done: 'Done' } 
         <h1 style="margin-top:0.6rem">{path.data.title}</h1>
         <p class="lede">{path.data.tagline}</p>
         <p class="small muted" style="margin:0.8rem 0 0">
-          {path.data.stages.length} stages · {pr.total} steps · {pr.done} done{pr.doing ? ` · ${pr.doing} in progress` : ''}
-          · <a href={fileUrl}><Icon name="edit" size={13} /> Update progress</a>
+          {path.data.stages.length} stages · {pr.total} steps · {`${pr.done} done${pr.doing ? ` · ${pr.doing} in progress` : ''} · `}<a href={fileUrl}><Icon name="edit" size={13} /> Update progress</a>
         </p>
       </div>
       <Ring pct={pr.pct} size={104} />

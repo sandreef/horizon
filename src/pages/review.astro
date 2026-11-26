@@ -130,7 +130,7 @@ const cardsUrl = url('cards.json');
     }
 
     function stats() {
-      $('[data-stat="left"]').textContent = String(queue.length);
+      $('[data-stat="left"]').textContent = String(queue.length + (current ? 1 : 0));
       $('[data-stat="today"]').textContent = String(state.days[today()] ?? 0);
       $('[data-stat="streak"]').textContent = String(streak());
       const learned = all.filter((c) => state.cards[c.id]?.reps).length;

@@ -1,4 +1,5 @@
 // Turns [[note-id]] and [[note-id|label]] into links to /notes/<note-id>/.
+// Without a label, the link shows the note's title.
 // A note's id is its file name in src/content/notes without ".md".
 // Links to notes that don't exist yet are rendered as plain text with a
 // "missing" style, so you can write links before writing the note.
@@ -19,20 +20,25 @@ export function slugify(text) {
     .replace(/-+/g, '-');
 }
 
-function existingIds() {
+// Maps each note id to its title, so [[note-id]] shows the note's title.
+function existingNotes() {
+  const notes = new Map();
   try {
-    return new Set(
-      fs.readdirSync(NOTES_DIR).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)),
-    );
-  } catch {
-    return new Set();
-  }
+    for (const f of fs.readdirSync(NOTES_DIR)) {
+      if (!f.endsWith('.md')) continue;
+      const text = fs.readFileSync(path.join(NOTES_DIR, f), 'utf8');
+      const m = text.match(/^---[\s\S]*?^title:\s*(.+?)\s*$/m);
+      const title = m ? m[1].replace(/^(["'])(.*)\1$/, '$2') : null;
+      notes.set(f.slice(0, -3), title);
+    }
+  } catch {}
+  return notes;
 }
 
 export function remarkWikiLinks({ base = '' } = {}) {
   const prefix = base.replace(/\/$/, '');
   return (tree) => {
-    const ids = existingIds();
+    const notes = existingNotes();
     visit(tree, 'text', (node, index, parent) => {
       if (!parent || index === undefined || !node.value.includes('[[')) return;
       const parts = [];
@@ -40,8 +46,8 @@ export function remarkWikiLinks({ base = '' } = {}) {
       for (const m of node.value.matchAll(WIKI)) {
         if (m.index > last) parts.push({ type: 'text', value: node.value.slice(last, m.index) });
         const id = slugify(m[1]);
-        const label = (m[2] ?? m[1]).trim();
-        if (ids.has(id)) {
+        const label = (m[2] ?? (notes.get(id) || m[1])).trim();
+        if (notes.has(id)) {
           parts.push({
             type: 'link',
             url: `${prefix}/notes/${id}/`,
